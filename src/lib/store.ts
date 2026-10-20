@@ -132,6 +132,29 @@ export const SECStore = {
     return getStoredItem<BusinessCategory[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
   },
 
+  addCategory(category: BusinessCategory, adminName = 'Super Admin'): void {
+    const cats = this.getCategories();
+    setStoredItem(STORAGE_KEYS.CATEGORIES, [...cats, category]);
+    this.addAuditLog('Added Category', 'Category', category.id, `Created industry category ${category.name}`, adminName);
+    notifyListeners();
+  },
+
+  updateCategory(id: string, updated: Partial<BusinessCategory>, adminName = 'Super Admin'): void {
+    const cats = this.getCategories();
+    const newCats = cats.map((c) => (c.id === id ? { ...c, ...updated } : c));
+    setStoredItem(STORAGE_KEYS.CATEGORIES, newCats);
+    this.addAuditLog('Updated Category', 'Category', id, `Updated category ${id}`, adminName);
+    notifyListeners();
+  },
+
+  deleteCategory(id: string, adminName = 'Super Admin'): void {
+    const cats = this.getCategories();
+    const newCats = cats.filter((c) => c.id !== id);
+    setStoredItem(STORAGE_KEYS.CATEGORIES, newCats);
+    this.addAuditLog('Deleted Category', 'Category', id, `Removed category ${id}`, adminName);
+    notifyListeners();
+  },
+
   getSettings(): AdminSettings {
     return getStoredItem<AdminSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
   },

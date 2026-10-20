@@ -147,7 +147,7 @@ export default function HomePage() {
 
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white uppercase leading-[1.08]">
-              Salem Entrepreneurs <span className="gold-gradient-text block mt-1">Club</span>
+              {settings.clubName || 'Salem Entrepreneurs Club'}
             </h1>
 
             {/* Subtitle */}

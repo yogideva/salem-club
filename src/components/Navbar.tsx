@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -20,6 +20,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import { SECStore, subscribeToStore } from '@/lib/store';
 import { NotificationCenter } from './NotificationCenter';
 import { GlobalSearchModal } from './GlobalSearchModal';
 
@@ -29,6 +30,14 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [settings, setSettings] = useState(SECStore.getSettings());
+
+  useEffect(() => {
+    const unsubscribe = subscribeToStore(() => {
+      setSettings(SECStore.getSettings());
+    });
+    return () => unsubscribe();
+  }, []);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -50,7 +59,7 @@ export const Navbar: React.FC = () => {
         <div className="bg-gradient-to-r from-slate-950 via-[#0B1528] to-slate-950 px-4 py-1.5 border-b border-slate-800 text-[11px] text-slate-300 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-            <span className="text-amber-400 font-semibold">Salem Entrepreneurs Club</span>
+            <span className="text-amber-400 font-semibold">{settings.clubName || 'Salem Entrepreneurs Club'}</span>
             <span className="text-slate-400 hidden md:inline">• Connect. Collaborate. Grow.</span>
           </div>
 
@@ -73,10 +82,10 @@ export const Navbar: React.FC = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-sm sm:text-base font-black tracking-wider uppercase text-white group-hover:text-amber-400 transition">
-                  Salem Entrepreneurs
+                  {settings.clubName || 'Salem Entrepreneurs Club'}
                 </span>
                 <span className="text-[10px] tracking-widest text-amber-400 uppercase font-semibold">
-                  Club • Private Network
+                  Private Network
                 </span>
               </div>
             </Link>

@@ -26,38 +26,87 @@ import {
   Loader2,
   Send,
   ExternalLink,
+  Building,
+  Phone,
+  Mail,
+  MapPin,
+  Globe,
+  Plus,
+  Edit2,
+  Tag,
+  BookOpen,
+  Layers,
+  X,
+  Sparkles,
 } from 'lucide-react';
+import {
+  InstagramIcon,
+  FacebookIcon,
+  YoutubeIcon,
+  LinkedinIcon,
+  WhatsAppIcon,
+} from '@/components/SocialIcons';
 import { useAuth } from '@/lib/authContext';
 import { SECStore, subscribeToStore } from '@/lib/store';
-import { AdminSettings, AuditLog } from '@/types';
+import { AdminSettings, AuditLog, BusinessCategory } from '@/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<AdminSettings>(SECStore.getSettings());
+  const [categories, setCategories] = useState<BusinessCategory[]>(SECStore.getCategories());
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(SECStore.getAuditLogs());
 
-  // Form Fields
-  const [membershipFee, setMembershipFee] = useState(settings.membershipFee);
-  const [membershipDuration, setMembershipDuration] = useState(settings.membershipDurationMonths);
-  const [referralPercentage, setReferralPercentage] = useState(settings.referralPercentage);
-  const [upiId, setUpiId] = useState(settings.upiId);
-  const [gpayNumber, setGpayNumber] = useState(settings.gpayNumber);
-  const [paymentInstructions, setPaymentInstructions] = useState(settings.paymentInstructions);
+  // Section 1: Club Branding & Identity
+  const [clubName, setClubName] = useState(settings.clubName || 'Salem Entrepreneurs Club');
+  const [tagline, setTagline] = useState(settings.tagline || 'Where Entrepreneurs Connect, Collaborate, Have Fun & Grow Together.');
+  const [logoUrl, setLogoUrl] = useState(settings.logoUrl || '');
+
+  // Section 2: Pricing & Referral Royalty Program
+  const [membershipFee, setMembershipFee] = useState(settings.membershipFee || 5000);
+  const [membershipDuration, setMembershipDuration] = useState(settings.membershipDurationMonths || 12);
+  const [referralPercentage, setReferralPercentage] = useState(settings.referralPercentage || 10);
+
+  // Section 3: Payment Accounts & QR Setup
+  const [upiId, setUpiId] = useState(settings.upiId || 'salementrepreneurs@okaxis');
+  const [gpayNumber, setGpayNumber] = useState(settings.gpayNumber || '+91 98427 88990');
+  const [paymentInstructions, setPaymentInstructions] = useState(settings.paymentInstructions || '');
   const [customQrUrl, setCustomQrUrl] = useState(settings.qrCodeUrl || '');
 
-  // Gamification Fields
-  const [referralPoints, setReferralPoints] = useState(settings.gamification.referralPoints);
-  const [attendancePoints, setAttendancePoints] = useState(settings.gamification.eventAttendancePoints);
-  const [postPoints, setPostPoints] = useState(settings.gamification.postPoints);
-  const [connectionPoints, setConnectionPoints] = useState(settings.gamification.connectionPoints);
+  // Section 4: Contact & Secretariat Information
+  const [contactPhone, setContactPhone] = useState(settings.contactPhone || '+91 98427 88990');
+  const [whatsappNumber, setWhatsappNumber] = useState(settings.whatsappNumber || '+91 98427 88990');
+  const [contactEmail, setContactEmail] = useState(settings.contactEmail || 'connect@salementrepreneursclub.com');
+  const [contactAddress, setContactAddress] = useState(
+    settings.contactAddress || '4th Floor, Apex Business Center, Fairlands Main Road, Salem - 636016, Tamil Nadu'
+  );
 
-  // Reminders
-  const [sevenDays, setSevenDays] = useState(settings.reminders.sevenDays);
-  const [oneDay, setOneDay] = useState(settings.reminders.oneDay);
-  const [twoHours, setTwoHours] = useState(settings.reminders.twoHours);
+  // Section 5: Official Social Media Handles
+  const [instagramUrl, setInstagramUrl] = useState(settings.instagramUrl || 'https://instagram.com/salementrepreneursclub');
+  const [linkedinUrl, setLinkedinUrl] = useState(settings.linkedinUrl || 'https://linkedin.com/company/salem-entrepreneurs-club');
+  const [youtubeUrl, setYoutubeUrl] = useState(settings.youtubeUrl || 'https://youtube.com/@salementrepreneurs');
+  const [facebookUrl, setFacebookUrl] = useState(settings.facebookUrl || 'https://facebook.com/salementrepreneursclub');
 
-  const [savedSuccess, setSavedSuccess] = useState(false);
-  const [generatedQr, setGeneratedQr] = useState('');
+  // Section 6: About, Mission & Policy Text
+  const [aboutText, setAboutText] = useState(settings.aboutText || '');
+  const [missionText, setMissionText] = useState(settings.missionText || '');
+  const [visionText, setVisionText] = useState(settings.visionText || '');
+  const [termsText, setTermsText] = useState(settings.termsText || '');
+  const [privacyText, setPrivacyText] = useState(settings.privacyText || '');
+
+  // Section 7: Gamification Fields
+  const [referralPoints, setReferralPoints] = useState(settings.gamification?.referralPoints ?? 50);
+  const [attendancePoints, setAttendancePoints] = useState(settings.gamification?.eventAttendancePoints ?? 10);
+  const [connectionPoints, setConnectionPoints] = useState(settings.gamification?.connectionPoints ?? 5);
+
+  // Section 8: Reminders
+  const [sevenDays, setSevenDays] = useState(settings.reminders?.sevenDays ?? true);
+  const [oneDay, setOneDay] = useState(settings.reminders?.oneDay ?? true);
+  const [twoHours, setTwoHours] = useState(settings.reminders?.twoHours ?? true);
+
+  // Category Manager State
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatDesc, setNewCatDesc] = useState('');
+  const [categorySuccess, setCategorySuccess] = useState('');
 
   // Admin Credentials Management
   const { updateAdminCredentials } = useAuth();
@@ -79,10 +128,19 @@ export default function AdminSettingsPage() {
     logs: string[];
   } | null>(null);
 
+  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [generatedQr, setGeneratedQr] = useState('');
+
+  // Active Tab for Quick Navigation
+  const [activeSection, setActiveSection] = useState<'all' | 'branding' | 'pricing' | 'contact' | 'social' | 'policies' | 'categories' | 'security'>('all');
+
   useEffect(() => {
     const handleUpdate = () => {
       const s = SECStore.getSettings();
       setSettings(s);
+      setClubName(s.clubName || 'Salem Entrepreneurs Club');
+      setTagline(s.tagline || '');
+      setLogoUrl(s.logoUrl || '');
       setMembershipFee(s.membershipFee);
       setMembershipDuration(s.membershipDurationMonths);
       setReferralPercentage(s.referralPercentage);
@@ -90,13 +148,26 @@ export default function AdminSettingsPage() {
       setGpayNumber(s.gpayNumber);
       setPaymentInstructions(s.paymentInstructions);
       setCustomQrUrl(s.qrCodeUrl || '');
-      setReferralPoints(s.gamification.referralPoints);
-      setAttendancePoints(s.gamification.eventAttendancePoints);
-      setPostPoints(s.gamification.postPoints);
-      setConnectionPoints(s.gamification.connectionPoints);
-      setSevenDays(s.reminders.sevenDays);
-      setOneDay(s.reminders.oneDay);
-      setTwoHours(s.reminders.twoHours);
+      setContactPhone(s.contactPhone);
+      setWhatsappNumber(s.whatsappNumber);
+      setContactEmail(s.contactEmail);
+      setContactAddress(s.contactAddress);
+      setInstagramUrl(s.instagramUrl);
+      setLinkedinUrl(s.linkedinUrl);
+      setYoutubeUrl(s.youtubeUrl);
+      setFacebookUrl(s.facebookUrl);
+      setAboutText(s.aboutText);
+      setMissionText(s.missionText);
+      setVisionText(s.visionText);
+      setTermsText(s.termsText);
+      setPrivacyText(s.privacyText);
+      setReferralPoints(s.gamification?.referralPoints ?? 50);
+      setAttendancePoints(s.gamification?.eventAttendancePoints ?? 10);
+      setConnectionPoints(s.gamification?.connectionPoints ?? 5);
+      setSevenDays(s.reminders?.sevenDays ?? true);
+      setOneDay(s.reminders?.oneDay ?? true);
+      setTwoHours(s.reminders?.twoHours ?? true);
+      setCategories(SECStore.getCategories());
       setAuditLogs(SECStore.getAuditLogs());
     };
     const unsubscribe = subscribeToStore(handleUpdate);
@@ -111,11 +182,161 @@ export default function AdminSettingsPage() {
     setConfirmPassword(creds.password);
 
     if (typeof window !== 'undefined') {
-      const savedRepo = localStorage.getItem('sec_github_repo_url') || '';
+      const savedRepo = localStorage.getItem('sec_github_repo_url') || 'https://github.com/yogideva/salem-club.git';
       if (savedRepo) setGithubRepoUrl(savedRepo);
     }
   }, []);
 
+  // Live QR Code preview
+  useEffect(() => {
+    const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(clubName)}&am=${membershipFee}&cu=INR`;
+    QRCode.toDataURL(upiString, { width: 140, margin: 1, color: { dark: '#070B14', light: '#FFFFFF' } })
+      .then((url) => setGeneratedQr(url))
+      .catch((err) => console.error(err));
+  }, [upiId, membershipFee, clubName]);
+
+  const handleQrFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit. Please upload a smaller image.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setCustomQrUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setLogoUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResetToGeneratedQr = () => {
+    setCustomQrUrl('');
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedSettingsPayload: Partial<AdminSettings> = {
+      clubName: clubName.trim(),
+      tagline: tagline.trim(),
+      logoUrl: logoUrl.trim(),
+      membershipFee: Number(membershipFee),
+      membershipDurationMonths: Number(membershipDuration),
+      referralPercentage: Number(referralPercentage),
+      upiId: upiId.trim(),
+      gpayNumber: gpayNumber.trim(),
+      qrCodeUrl: customQrUrl.trim(),
+      paymentInstructions: paymentInstructions.trim(),
+      contactPhone: contactPhone.trim(),
+      whatsappNumber: whatsappNumber.trim(),
+      contactEmail: contactEmail.trim(),
+      contactAddress: contactAddress.trim(),
+      instagramUrl: instagramUrl.trim(),
+      linkedinUrl: linkedinUrl.trim(),
+      youtubeUrl: youtubeUrl.trim(),
+      facebookUrl: facebookUrl.trim(),
+      aboutText: aboutText.trim(),
+      missionText: missionText.trim(),
+      visionText: visionText.trim(),
+      termsText: termsText.trim(),
+      privacyText: privacyText.trim(),
+      gamification: {
+        referralPoints: Number(referralPoints),
+        eventAttendancePoints: Number(attendancePoints),
+        postPoints: 2,
+        connectionPoints: Number(connectionPoints),
+      },
+      reminders: {
+        sevenDays,
+        oneDay,
+        twoHours,
+      },
+    };
+
+    SECStore.updateSettings(updatedSettingsPayload, 'Super Admin');
+
+    // Sync with Supabase PostgreSQL if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('admin_settings')
+          .update({
+            club_name: clubName.trim(),
+            tagline: tagline.trim(),
+            logo_url: logoUrl.trim(),
+            membership_fee: Number(membershipFee),
+            membership_duration_months: Number(membershipDuration),
+            referral_percentage: Number(referralPercentage),
+            upi_id: upiId.trim(),
+            gpay_number: gpayNumber.trim(),
+            qr_code_url: customQrUrl.trim(),
+            payment_instructions: paymentInstructions.trim(),
+            contact_phone: contactPhone.trim(),
+            whatsapp_number: whatsappNumber.trim(),
+            contact_email: contactEmail.trim(),
+            contact_address: contactAddress.trim(),
+            instagram_url: instagramUrl.trim(),
+            linkedin_url: linkedinUrl.trim(),
+            youtube_url: youtubeUrl.trim(),
+            facebook_url: facebookUrl.trim(),
+            about_text: aboutText.trim(),
+            mission_text: missionText.trim(),
+            vision_text: visionText.trim(),
+            terms_text: termsText.trim(),
+            privacy_text: privacyText.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', 'global');
+      } catch (err) {
+        console.error('Failed to sync settings with Supabase:', err);
+      }
+    }
+
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 4000);
+  };
+
+  // Add Category Handler
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+
+    const newId = newCatName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const newCat: BusinessCategory = {
+      id: newId,
+      name: newCatName.trim(),
+      description: newCatDesc.trim() || `${newCatName.trim()} enterprises and services`,
+    };
+
+    SECStore.addCategory(newCat);
+    setNewCatName('');
+    setNewCatDesc('');
+    setCategorySuccess(`Added "${newCat.name}" to Industry Categories!`);
+    setTimeout(() => setCategorySuccess(''), 3500);
+  };
+
+  const handleDeleteCategory = (id: string, name: string) => {
+    if (confirm(`Remove "${name}" from available categories?`)) {
+      SECStore.deleteCategory(id);
+    }
+  };
+
+  // Save Admin Credentials
   const handleSaveAdminCredentials = (e: React.FormEvent) => {
     e.preventDefault();
     setAdminCredError('');
@@ -139,10 +360,11 @@ export default function AdminSettingsPage() {
     setTimeout(() => setAdminCredSuccess(false), 4000);
   };
 
+  // Push to GitHub
   const handleGitHubPush = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!githubRepoUrl.trim()) {
-      alert('Please enter your GitHub repository URL (e.g. https://github.com/username/salem-entrepreneurs-club.git)');
+      alert('Please enter your GitHub repository URL (e.g. https://github.com/yogideva/salem-club.git)');
       return;
     }
     if (typeof window !== 'undefined') {
@@ -157,7 +379,7 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           remoteUrl: githubRepoUrl.trim(),
-          commitMessage: githubCommitMsg.trim() || 'Update Salem Entrepreneurs Club',
+          commitMessage: githubCommitMsg.trim() || 'Update Salem Entrepreneurs Club platform',
         }),
       });
       const data = await res.json();
@@ -173,83 +395,6 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Live QR Code preview
-  useEffect(() => {
-    const upiString = `upi://pay?pa=${upiId}&pn=Salem%20Entrepreneurs%20Club&am=${membershipFee}&cu=INR`;
-    QRCode.toDataURL(upiString, { width: 140, margin: 1, color: { dark: '#070B14', light: '#FFFFFF' } })
-      .then((url) => setGeneratedQr(url))
-      .catch((err) => console.error(err));
-  }, [upiId, membershipFee]);
-
-  const handleQrFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit. Please upload a smaller image.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setCustomQrUrl(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleResetToGeneratedQr = () => {
-    setCustomQrUrl('');
-  };
-
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    SECStore.updateSettings({
-      membershipFee: Number(membershipFee),
-      membershipDurationMonths: Number(membershipDuration),
-      referralPercentage: Number(referralPercentage),
-      upiId: upiId.trim(),
-      gpayNumber: gpayNumber.trim(),
-      qrCodeUrl: customQrUrl.trim(),
-      paymentInstructions: paymentInstructions.trim(),
-      gamification: {
-        referralPoints: Number(referralPoints),
-        eventAttendancePoints: Number(attendancePoints),
-        postPoints: Number(postPoints),
-        connectionPoints: Number(connectionPoints),
-      },
-      reminders: {
-        sevenDays,
-        oneDay,
-        twoHours,
-      },
-    }, 'Super Admin');
-
-    // Also update Supabase database if configured
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase
-          .from('admin_settings')
-          .update({
-            membership_fee: Number(membershipFee),
-            membership_duration_months: Number(membershipDuration),
-            referral_percentage: Number(referralPercentage),
-            upi_id: upiId.trim(),
-            gpay_number: gpayNumber.trim(),
-            qr_code_url: customQrUrl.trim(),
-            payment_instructions: paymentInstructions.trim(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', 'global');
-      } catch (err) {
-        console.error('Failed to sync settings with Supabase:', err);
-      }
-    }
-
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
-  };
-
   const handleWipeAllData = () => {
     if (confirm('Are you sure you want to wipe all test members, payments, and registrations? This starts the application with a clean slate.')) {
       SECStore.clearAllData('Super Admin');
@@ -260,362 +405,711 @@ export default function AdminSettingsPage() {
   const calculatedCommissionExample = Math.round((membershipFee * referralPercentage) / 100);
 
   return (
-    <div className="space-y-10 max-w-7xl mx-auto pb-12">
+    <div className="space-y-10 max-w-7xl mx-auto pb-16">
       {/* Header */}
-      <div className="border-b border-slate-800 pb-5 space-y-1">
-        <h1 className="text-2xl font-black text-white uppercase tracking-tight">
-          Admin Settings & Audit Log
-        </h1>
-        <p className="text-xs text-slate-400">
-          Configure financial rules, UPI payment accounts, automated reminder triggers, and review executive audit history.
-        </p>
+      <div className="border-b border-slate-800 pb-5 space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight flex items-center gap-2.5">
+              <Settings className="w-7 h-7 text-amber-400" /> Master Club Customization & Settings
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Edit all default information across the platform: branding, fees, contact numbers, UPI QR codes, categories, policies, and passwords.
+            </p>
+          </div>
+
+          <button
+            onClick={handleSaveSettings}
+            className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 flex items-center gap-2 transition self-start sm:self-auto shrink-0"
+          >
+            <Save className="w-4 h-4" /> Save All Changes
+          </button>
+        </div>
+
+        {/* Section Navigation Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-3">
+          {[
+            { id: 'all', label: 'All Settings' },
+            { id: 'branding', label: '1. Branding & Name' },
+            { id: 'pricing', label: '2. Fees & QR Code' },
+            { id: 'contact', label: '3. Contact & Address' },
+            { id: 'social', label: '4. Social Links' },
+            { id: 'categories', label: '5. Industry Categories' },
+            { id: 'policies', label: '6. About & Policies' },
+            { id: 'security', label: '7. Password & Security' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveSection(tab.id as any)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                activeSection === tab.id
+                  ? 'bg-amber-400 text-slate-950 font-bold shadow'
+                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {savedSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Club settings successfully saved and applied system-wide!
+        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2 shadow-lg animate-in fade-in">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+          <span>All club settings, fees, contact info, and policies successfully saved and applied system-wide!</span>
         </div>
       )}
 
       {/* Main Settings Form */}
       <form onSubmit={handleSaveSettings} className="space-y-8">
-        {/* Section: Pricing & Referral Program (Requirement: Not Hardcoded) */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-amber-500/30 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /> Membership Pricing & Referral Royalty Rules
-            </h2>
-            <span className="text-[10px] text-slate-400 font-mono">Dynamic Calculation Engine</span>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Annual Membership Fee (₹) *
-              </label>
-              <input
-                type="number"
-                required
-                value={membershipFee}
-                onChange={(e) => setMembershipFee(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm font-black font-mono text-amber-400 focus:outline-none focus:border-amber-400"
-              />
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                Editable base fee charged to new applicants.
-              </span>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Referral Commission Percentage (%) *
-              </label>
-              <input
-                type="number"
-                required
-                value={referralPercentage}
-                onChange={(e) => setReferralPercentage(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm font-black font-mono text-amber-400 focus:outline-none focus:border-amber-400"
-              />
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                Percentage paid to referring members.
-              </span>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Membership Duration (Months) *
-              </label>
-              <input
-                type="number"
-                required
-                value={membershipDuration}
-                onChange={(e) => setMembershipDuration(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm font-mono text-white focus:outline-none focus:border-amber-400"
-              />
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                Typically 12 months (1 year).
-              </span>
-            </div>
-          </div>
-
-          {/* Dynamic Calculation Indicator */}
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
-            <span className="text-slate-300">
-              Live Formula Preview: Membership Fee (₹{membershipFee.toLocaleString('en-IN')}) × Referral Rate ({referralPercentage}%) =
-            </span>
-            <span className="font-mono font-black text-amber-400 text-base">
-              ₹{calculatedCommissionExample.toLocaleString('en-IN')} Per Referral
-            </span>
-          </div>
-        </div>
-
-        {/* Section: UPI / GPay Payment Gateways & Upload QR Code */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-amber-500/30 shadow-xl space-y-6">
-          <div className="border-b border-slate-800 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
+        {/* ======================================================== */}
+        {/* 1. CLUB BRANDING & HERO TITLE */}
+        {/* ======================================================== */}
+        {(activeSection === 'all' || activeSection === 'branding') && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-                <CreditCard className="w-4 h-4" /> Official Payment QR Code & UPI Gateways
+                <Building className="w-4 h-4" /> 1. Club Identity, Name & Hero Headline
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Upload your official UPI/GPay QR code image here. It immediately updates live in the Member Sign Up & Payment flow.
-              </p>
+              <span className="text-[10px] text-slate-400 font-mono">Platform Branding</span>
             </div>
-            {customQrUrl ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Custom Uploaded QR Active
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[11px] font-bold">
-                Auto-Generated UPI QR
-              </span>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-7 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Official Business UPI ID *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={upiId}
-                    onChange={(e) => setUpiId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Google Pay / PhonePe Mobile *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={gpayNumber}
-                    onChange={(e) => setGpayNumber(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* QR Upload Feature */}
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
-                <label className="text-xs font-bold text-amber-300 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Upload className="w-4 h-4 text-amber-400" /> Upload Official QR Code Image
-                  </span>
-                  {customQrUrl && (
-                    <button
-                      type="button"
-                      onClick={handleResetToGeneratedQr}
-                      className="text-[11px] text-red-400 hover:text-red-300 flex items-center gap-1 font-semibold"
-                    >
-                      <RotateCcw className="w-3 h-3" /> Reset to Generated QR
-                    </button>
-                  )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Official Club Name *
                 </label>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Upload your shop / bank GPay, PhonePe, Paytm, or BharatPe QR code photo from your device. Member sign-up screens will immediately display this uploaded QR code.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch">
-                  <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-dashed border-slate-600 hover:border-amber-400 transition text-xs font-bold text-slate-200">
-                    <Upload className="w-4 h-4 text-amber-400" />
-                    <span>Choose QR Image File (PNG, JPG)</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleQrFileUpload}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-
-                <div className="pt-1">
-                  <label className="text-[11px] font-semibold text-slate-400 block mb-1">
-                    Or Enter Hosted QR Code Image URL:
-                  </label>
-                  <input
-                    type="url"
-                    value={customQrUrl}
-                    onChange={(e) => setCustomQrUrl(e.target.value)}
-                    placeholder="https://your-domain.com/my-gpay-qr.png"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={clubName}
+                  onChange={(e) => setClubName(e.target.value)}
+                  placeholder="Salem Entrepreneurs Club"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                />
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Appears in header, homepage title, footer, and member receipts.
+                </span>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Payment Instructions for Members
+                  Club Logo URL / Upload Logo
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="/images/sec-logo.png or https://..."
+                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                  <label className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs cursor-pointer border border-slate-700 shrink-0 flex items-center gap-1.5 transition">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload</span>
+                    <input type="file" accept="image/*" onChange={handleLogoFileUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Hero Tagline / Subtitle *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder="Where Entrepreneurs Connect, Collaborate, Have Fun & Grow Together."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                />
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Prominently displayed beneath the hero headline on the home page.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* 2. MEMBERSHIP PRICING, ROYALTIES & UPI QR CODE */}
+        {/* ======================================================== */}
+        {(activeSection === 'all' || activeSection === 'pricing') && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-amber-500/30 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="w-4 h-4" /> 2. Membership Pricing, Referral Royalties & Payment Accounts
+              </h2>
+              <span className="text-[10px] text-slate-400 font-mono">Financial Engine</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Annual Membership Fee (₹) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  value={membershipFee}
+                  onChange={(e) => setMembershipFee(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                />
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Displayed on sign-up & dynamic UPI generation.
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Validity Period (Months) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  value={membershipDuration}
+                  onChange={(e) => setMembershipDuration(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Referral Royalty Percentage (%) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  max={100}
+                  value={referralPercentage}
+                  onChange={(e) => setReferralPercentage(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                />
+                <p className="text-[11px] text-amber-400 mt-1">
+                  Referrer earns ₹{calculatedCommissionExample.toLocaleString('en-IN')} per closed invite.
+                </p>
+              </div>
+            </div>
+
+            {/* UPI & GPay Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2 border-t border-slate-800/80">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Official Club UPI ID *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  placeholder="salementrepreneurs@okaxis"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  GPay / PhonePe Mobile Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={gpayNumber}
+                  onChange={(e) => setGpayNumber(e.target.value)}
+                  placeholder="+91 98427 88990"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                />
+              </div>
+            </div>
+
+            {/* Custom Payment QR Code Upload */}
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-amber-400" /> Payment QR Code Configuration
+                  </span>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Upload your official GPay / PhonePe / Paytm / Bank QR code. It will reflect on Member Sign-Up and Paid Events.
+                  </p>
+                </div>
+                <span
+                  className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                    customQrUrl
+                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {customQrUrl ? '✓ Custom Uploaded QR Active' : 'Auto-Generated Dynamic QR'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <div className="space-y-3 md:col-span-2 text-xs">
+                  <div>
+                    <label className="text-slate-300 font-semibold block mb-1.5">
+                      Upload QR Code Image (PNG / JPG):
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <label className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold cursor-pointer text-xs flex items-center gap-2 transition shadow">
+                        <Upload className="w-4 h-4" />
+                        <span>Choose QR Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleQrFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {customQrUrl && (
+                        <button
+                          type="button"
+                          onClick={handleResetToGeneratedQr}
+                          className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs flex items-center gap-1.5 transition"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Reset to Generated</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-slate-300 font-semibold block mb-1.5">
+                      Or Paste Image URL:
+                    </label>
+                    <input
+                      type="url"
+                      value={customQrUrl}
+                      onChange={(e) => setCustomQrUrl(e.target.value)}
+                      placeholder="https://example.com/my-club-qr.png"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* QR Code Live Preview */}
+                <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                  <div className="w-32 h-32 bg-white rounded-xl p-1.5 shadow-md flex items-center justify-center overflow-hidden">
+                    <img
+                      src={customQrUrl || generatedQr}
+                      alt="Active QR Preview"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 mt-2 font-mono">
+                    {customQrUrl ? 'Live Custom QR' : `₹${membershipFee} Dynamic UPI`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Instructions Box */}
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">
+                Payment Guidance Note (Shown on Sign-Up & Event RSVP)
+              </label>
+              <textarea
+                rows={2}
+                value={paymentInstructions}
+                onChange={(e) => setPaymentInstructions(e.target.value)}
+                placeholder="Scan the QR code or send payment to the official UPI ID. Copy the 12-digit UTR and upload your screenshot proof."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* 3. OFFICIAL SECRETARIAT, CONTACT & ADDRESS */}
+        {/* ======================================================== */}
+        {(activeSection === 'all' || activeSection === 'contact') && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <MapPin className="w-4 h-4" /> 3. Official Secretariat, Office Address & Helplines
+              </h2>
+              <span className="text-[10px] text-slate-400 font-mono">Contact Info</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-amber-400" /> Official Phone Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="+91 98427 88990"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400" /> Official WhatsApp Helpline *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  placeholder="+91 98427 88990"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-amber-400" /> Secretariat Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="connect@salementrepreneursclub.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className="text-xs font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-amber-400" /> Physical Chapter Office / Postal Address *
                 </label>
                 <textarea
                   rows={2}
-                  value={paymentInstructions}
-                  onChange={(e) => setPaymentInstructions(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 resize-none"
+                  required
+                  value={contactAddress}
+                  onChange={(e) => setContactAddress(e.target.value)}
+                  placeholder="4th Floor, Apex Business Center, Fairlands Main Road, Salem - 636016, Tamil Nadu"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Live QR Display Box */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-3">
-              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
-                Live Payment QR on Sign Up Page
+        {/* ======================================================== */}
+        {/* 4. OFFICIAL SOCIAL MEDIA CHANNELS */}
+        {/* ======================================================== */}
+        {(activeSection === 'all' || activeSection === 'social') && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <Globe className="w-4 h-4" /> 4. Official Club Social Media Channels
+              </h2>
+              <span className="text-[10px] text-slate-400 font-mono">Footer & Member Profiles</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+              <div>
+                <label className="font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <InstagramIcon className="w-4 h-4 text-pink-400" /> Official Instagram Profile Link
+                </label>
+                <input
+                  type="text"
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/salementrepreneursclub"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <LinkedinIcon className="w-4 h-4 text-blue-400" /> LinkedIn Company Page Link
+                </label>
+                <input
+                  type="text"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/company/salem-entrepreneurs-club"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <YoutubeIcon className="w-4 h-4 text-red-400" /> YouTube Channel Link
+                </label>
+                <input
+                  type="text"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://youtube.com/@salementrepreneurs"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-300 block mb-1 flex items-center gap-1.5">
+                  <FacebookIcon className="w-4 h-4 text-blue-500" /> Facebook Page Link
+                </label>
+                <input
+                  type="text"
+                  value={facebookUrl}
+                  onChange={(e) => setFacebookUrl(e.target.value)}
+                  placeholder="https://facebook.com/salementrepreneursclub"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* 5. INDUSTRY CATEGORIES MANAGER */}
+        {/* ======================================================== */}
+        {(activeSection === 'all' || activeSection === 'categories') && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4" /> 5. Industry Categories Manager ({categories.length})
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Add, edit, or remove business industries available in the Member Sign-Up dropdown and directory filters.
+                </p>
+              </div>
+              <span className="text-[10px] text-slate-400 font-mono">Live Sync</span>
+            </div>
+
+            {categorySuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300 font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> {categorySuccess}
+              </div>
+            )}
+
+            {/* Add New Category Box */}
+            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+              <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Plus className="w-4 h-4 text-amber-400" /> Add New Industry Category
               </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <input
+                    type="text"
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="Category Name (e.g. Solar Energy)"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+                <div className="sm:col-span-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newCatDesc}
+                    onChange={(e) => setNewCatDesc(e.target.value)}
+                    placeholder="Short description (e.g. Solar rooftop panels, EV chargers, green power)"
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase shrink-0 transition"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
 
-              <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-amber-400/40 max-w-[220px]">
-                <img
-                  src={customQrUrl || generatedQr}
-                  alt="Official Salem Entrepreneurs Club Payment QR"
-                  className="w-48 h-48 object-contain"
+            {/* Categories List */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
+              {categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start justify-between gap-2 group hover:border-slate-700 transition"
+                >
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-white block">{cat.name}</span>
+                    <span className="text-[11px] text-slate-400 block line-clamp-1">{cat.description}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                    className="p-1 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition shrink-0"
+                    title={`Delete ${cat.name}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* 6. ABOUT, MISSION, VISION & POLICIES (CMS) */}
+        {/* ======================================================== */}
+        {(activeSection === 'all' || activeSection === 'policies') && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <BookOpen className="w-4 h-4" /> 6. About, Mission, Vision & Legal Policies
+              </h2>
+              <span className="text-[10px] text-slate-400 font-mono">Homepage & Legal Text</span>
+            </div>
+
+            <div className="space-y-5 text-xs">
+              <div>
+                <label className="font-semibold text-slate-300 block mb-1">
+                  About the Club (Homepage Overview)
+                </label>
+                <textarea
+                  rows={3}
+                  value={aboutText}
+                  onChange={(e) => setAboutText(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400 leading-relaxed"
                 />
               </div>
 
-              <div className="space-y-1">
-                <div className="text-xs font-bold text-white">
-                  {customQrUrl ? 'Official Uploaded QR Code' : 'Auto-Generated Dynamic QR'}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="font-semibold text-slate-300 block mb-1">
+                    Mission Statement
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={missionText}
+                    onChange={(e) => setMissionText(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400 leading-relaxed"
+                  />
                 </div>
-                <div className="text-[11px] font-mono text-amber-400 font-semibold">
-                  Amount: ₹{membershipFee.toLocaleString('en-IN')}
+
+                <div>
+                  <label className="font-semibold text-slate-300 block mb-1">
+                    Vision Statement
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={visionText}
+                    onChange={(e) => setVisionText(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400 leading-relaxed"
+                  />
                 </div>
-                <div className="text-[10px] font-mono text-slate-400">
-                  UPI ID: {upiId}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="font-semibold text-slate-300 block mb-1">
+                    Terms & Conditions / Code of Conduct
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={termsText}
+                    onChange={(e) => setTermsText(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400 leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-300 block mb-1">
+                    Privacy Policy
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={privacyText}
+                    onChange={(e) => setPrivacyText(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400 leading-relaxed"
+                  />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
 
-              <div className="text-[10px] text-slate-400 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 leading-relaxed">
-                💡 Members will scan this exact QR code during registration to transfer the ₹{membershipFee.toLocaleString('en-IN')} annual fee.
+        {/* ======================================================== */}
+        {/* 7. GAMIFICATION & REMINDER SCHEDULES */}
+        {/* ======================================================== */}
+        {(activeSection === 'all') && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Gamification Points */}
+            <div className="p-6 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-4">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <Award className="w-4 h-4" /> Gamification & Activity Points
+              </h2>
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label className="text-slate-400 block mb-1">Referral</label>
+                  <input
+                    type="number"
+                    value={referralPoints}
+                    onChange={(e) => setReferralPoints(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Attendance</label>
+                  <input
+                    type="number"
+                    value={attendancePoints}
+                    onChange={(e) => setAttendancePoints(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Connection</label>
+                  <input
+                    type="number"
+                    value={connectionPoints}
+                    onChange={(e) => setConnectionPoints(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Notification Reminders */}
+            <div className="p-6 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-4">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <Bell className="w-4 h-4" /> Automated Event Reminders
+              </h2>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <label className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sevenDays}
+                    onChange={(e) => setSevenDays(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-400"
+                  />
+                  <span className="font-semibold text-white">7 Days</span>
+                </label>
+                <label className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={oneDay}
+                    onChange={(e) => setOneDay(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-400"
+                  />
+                  <span className="font-semibold text-white">1 Day</span>
+                </label>
+                <label className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={twoHours}
+                    onChange={(e) => setTwoHours(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-400"
+                  />
+                  <span className="font-semibold text-white">2 Hours</span>
+                </label>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Section: Gamification Points Config */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-6">
-          <div className="border-b border-slate-800 pb-3">
-            <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-              <Award className="w-4 h-4" /> Gamification Point Values
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Control the leaderboard points awarded to members for community engagement.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Referral Activation
-              </label>
-              <input
-                type="number"
-                value={referralPoints}
-                onChange={(e) => setReferralPoints(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-amber-400 focus:outline-none"
-              />
-              <span className="text-[10px] text-slate-500">Default: 50 pts</span>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Conclave Attendance
-              </label>
-              <input
-                type="number"
-                value={attendancePoints}
-                onChange={(e) => setAttendancePoints(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-emerald-400 focus:outline-none"
-              />
-              <span className="text-[10px] text-slate-500">Default: 10 pts</span>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Accepted Connection
-              </label>
-              <input
-                type="number"
-                value={connectionPoints}
-                onChange={(e) => setConnectionPoints(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-blue-400 focus:outline-none"
-              />
-              <span className="text-[10px] text-slate-500">Default: 5 pts</span>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Community Post
-              </label>
-              <input
-                type="number"
-                value={postPoints}
-                onChange={(e) => setPostPoints(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-purple-400 focus:outline-none"
-              />
-              <span className="text-[10px] text-slate-500">Default: 2 pts</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Section: Automated Conclave Notifications */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-4">
-          <div className="border-b border-slate-800 pb-3">
-            <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-              <Bell className="w-4 h-4" /> Event Reminders & Dispatch Rules
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Enable or disable automated notification reminders dispatched to registered delegates.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={sevenDays}
-                onChange={(e) => setSevenDays(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-400 focus:ring-amber-400"
-              />
-              <div>
-                <span className="font-bold text-white block">7 Days Before</span>
-                <span className="text-slate-400 text-[11px]">Primary conclave reminder</span>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={oneDay}
-                onChange={(e) => setOneDay(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-400 focus:ring-amber-400"
-              />
-              <div>
-                <span className="font-bold text-white block">1 Day Before</span>
-                <span className="text-slate-400 text-[11px]">Venue & dress code advisory</span>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={twoHours}
-                onChange={(e) => setTwoHours(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-400 focus:ring-amber-400"
-              />
-              <div>
-                <span className="font-bold text-white block">2 Hours Before</span>
-                <span className="text-slate-400 text-[11px]">Gate check-in pass reminder</span>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
+        {/* Master Save Button */}
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             className="px-8 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 flex items-center gap-2 transition"
@@ -625,110 +1119,116 @@ export default function AdminSettingsPage() {
         </div>
       </form>
 
-      {/* Section: Admin Login Credentials (User Request) */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-amber-500/30 shadow-xl space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Admin Login Credentials & Password
-            </h2>
-            <p className="text-xs text-slate-400">
-              Change the Super Admin username / email and login password. These credentials secure the /admin management console.
-            </p>
-          </div>
-          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-            Live Security
-          </span>
-        </div>
-
-        {adminCredSuccess && (
-          <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            Admin login credentials updated successfully! Use these new credentials for future logins.
-          </div>
-        )}
-
-        {adminCredError && (
-          <div className="p-4 rounded-2xl bg-red-500/15 border border-red-500/30 text-xs font-bold text-red-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            {adminCredError}
-          </div>
-        )}
-
-        <form onSubmit={handleSaveAdminCredentials} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Admin Username / Email *
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  required
-                  value={adminUsername}
-                  onChange={(e) => setAdminUsername(e.target.value)}
-                  placeholder="admin@salementrepreneursclub.com"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
+      {/* ======================================================== */}
+      {/* 8. ADMIN LOGIN CREDENTIALS & SECURITY */}
+      {/* ======================================================== */}
+      {(activeSection === 'all' || activeSection === 'security') && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-amber-500/30 shadow-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="space-y-1">
+              <h2 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> 7. Admin Login Credentials & Password
+              </h2>
+              <p className="text-xs text-slate-400">
+                Change the Super Admin username / email and login password. These credentials secure the /admin management console.
+              </p>
             </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                New Admin Password *
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-                <input
-                  type="password"
-                  required
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Confirm New Password *
-              </label>
-              <div className="relative">
-                <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-[11px] text-slate-500 font-mono">
-              Default: admin@salementrepreneursclub.com | Min length: 6 characters
+            <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+              Live Security
             </span>
-            <button
-              type="submit"
-              className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-lg shadow-amber-500/20"
-            >
-              <Key className="w-4 h-4" /> Update Admin Credentials
-            </button>
           </div>
-        </form>
-      </div>
 
-      {/* Section: One-Click GitHub Push (User Request) */}
+          {adminCredSuccess && (
+            <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              Admin login credentials updated successfully! Use these new credentials for future logins.
+            </div>
+          )}
+
+          {adminCredError && (
+            <div className="p-4 rounded-2xl bg-red-500/15 border border-red-500/30 text-xs font-bold text-red-300 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {adminCredError}
+            </div>
+          )}
+
+          <form onSubmit={handleSaveAdminCredentials} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Admin Username / Email *
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    required
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    placeholder="admin@salementrepreneursclub.com"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  New Admin Password *
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="password"
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Confirm New Password *
+                </label>
+                <div className="relative">
+                  <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[11px] text-slate-500 font-mono">
+                Default: admin@salementrepreneursclub.com | Min length: 6 characters
+              </span>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-lg shadow-amber-500/20"
+              >
+                <Key className="w-4 h-4" /> Update Admin Credentials
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 9. ONE-CLICK GITHUB PUSH */}
+      {/* ======================================================== */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-blue-500/30 shadow-xl space-y-6">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="space-y-1">
             <h2 className="text-sm font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
-              <GitBranch className="w-4 h-4" /> One-Click GitHub Sync & Push
+              <GitBranch className="w-4 h-4" /> 8. One-Click GitHub Sync & Push
             </h2>
             <p className="text-xs text-slate-400">
               Commit and push your entire codebase, latest changes, and new features to GitHub with a single click.
@@ -750,12 +1250,9 @@ export default function AdminSettingsPage() {
                 required
                 value={githubRepoUrl}
                 onChange={(e) => setGithubRepoUrl(e.target.value)}
-                placeholder="https://github.com/your-username/salem-entrepreneurs-club.git"
+                placeholder="https://github.com/yogideva/salem-club.git"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-blue-400 font-mono"
               />
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                Supports HTTPS clone URLs or Token URLs (<code className="text-slate-400">https://TOKEN@github.com/...</code> for private repos).
-              </span>
             </div>
 
             <div>
@@ -769,9 +1266,6 @@ export default function AdminSettingsPage() {
                 placeholder="Update Salem Entrepreneurs Club platform"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-blue-400"
               />
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                A Windows batch tool <code className="text-slate-400">push-to-github.bat</code> is also generated in the project root.
-              </span>
             </div>
           </div>
 
@@ -823,12 +1317,6 @@ export default function AdminSettingsPage() {
               <span>{githubResult.message || githubResult.error}</span>
             </div>
 
-            {githubResult.hint && (
-              <p className="text-[11px] text-amber-300 font-semibold pl-6">
-                💡 Tip: {githubResult.hint}
-              </p>
-            )}
-
             {githubResult.logs?.length > 0 && (
               <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-slate-400 max-h-40 overflow-y-auto space-y-1 mt-2">
                 {githubResult.logs.map((line, idx) => (
@@ -840,7 +1328,9 @@ export default function AdminSettingsPage() {
         )}
       </div>
 
-      {/* Danger Zone: Clear Application Data */}
+      {/* ======================================================== */}
+      {/* 10. DANGER ZONE: RESET DATA */}
+      {/* ======================================================== */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-red-500/30 shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -862,7 +1352,9 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Section: Audit Logs (Requirement 42) */}
+      {/* ======================================================== */}
+      {/* 11. AUDIT LOGS */}
+      {/* ======================================================== */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[#0F172A] border border-slate-800 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2">
