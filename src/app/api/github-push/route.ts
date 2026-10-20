@@ -58,7 +58,16 @@ export async function POST(request: Request) {
     log(`Using Git: ${git}`);
 
     const projectRoot = process.cwd();
-    const execOpts = { cwd: projectRoot, maxBuffer: 10 * 1024 * 1024 };
+    const execOpts = {
+      cwd: projectRoot,
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: 45000,
+      env: {
+        ...process.env,
+        GIT_TERMINAL_PROMPT: '0',
+        GCM_INTERACTIVE: 'never',
+      },
+    };
 
     // 1. Check if git repo is initialized
     const gitDir = path.join(projectRoot, '.git');
