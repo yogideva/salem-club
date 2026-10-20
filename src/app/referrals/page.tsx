@@ -35,9 +35,9 @@ export default function ReferralsDashboardPage() {
     return () => unsubscribe();
   }, []);
 
-  const member = currentUser || (role === 'admin' ? SECStore.getMembers()[0] : null);
+  const member = currentUser;
 
-  if (!member || (role === 'visitor' && !currentUser)) {
+  if (!currentUser) {
     return (
       <MemberAccessGate
         title="Referral Program & Royalties"

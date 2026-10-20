@@ -94,7 +94,7 @@ export const Navbar: React.FC = () => {
             <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
-                const isGated = role === 'visitor' && !currentUser && link.href !== '/';
+                const isGated = !currentUser && link.href !== '/';
                 return (
                   <Link
                     key={link.name}
@@ -106,7 +106,7 @@ export const Navbar: React.FC = () => {
                     }`}
                   >
                     <span>{link.name}</span>
-                    {isGated && <Lock className="w-3 h-3 text-amber-400/70" />}
+                    {isGated && <Lock className="w-3 h-3 text-amber-400/80" />}
                   </Link>
                 );
               })}
@@ -155,6 +155,12 @@ export const Navbar: React.FC = () => {
 
               {role === 'admin' && (
                 <div className="flex items-center space-x-2">
+                  <Link
+                    href="/login"
+                    className="hidden sm:inline-flex px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                  >
+                    Member Login
+                  </Link>
                   <Link
                     href="/admin"
                     className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-1.5"
@@ -301,7 +307,7 @@ export const Navbar: React.FC = () => {
             <nav className="flex flex-col space-y-1">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
-                const isGated = role === 'visitor' && !currentUser && link.href !== '/';
+                const isGated = !currentUser && link.href !== '/';
                 return (
                   <Link
                     key={link.name}

@@ -31,7 +31,7 @@ export default function LeaderboardPage() {
     return () => unsubscribe();
   }, []);
 
-  if (role === 'visitor' && !currentUser) {
+  if (!currentUser) {
     return (
       <MemberAccessGate
         title="Leaderboard is Members-Only"

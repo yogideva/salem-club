@@ -190,7 +190,7 @@ export default function EventDetailPage({
     setTimeout(() => setRegistrationSuccess(false), 5000);
   };
 
-  if (role === 'visitor' && !currentUser) {
+  if (!currentUser) {
     return (
       <MemberAccessGate
         title="Event Access Restricted"

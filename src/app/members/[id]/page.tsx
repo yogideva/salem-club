@@ -49,7 +49,7 @@ export default function MemberProfilePage({
   const [showCardModal, setShowCardModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  if (role === 'visitor' && !currentUser) {
+  if (!currentUser) {
     return (
       <MemberAccessGate
         title="Member Profile is Protected"

@@ -531,6 +531,16 @@ export default function AdminSettingsPage() {
                 </span>
               </div>
             </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Branding & Club Name
+              </button>
+            </div>
           </div>
         )}
 
@@ -724,6 +734,16 @@ export default function AdminSettingsPage() {
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400"
               />
             </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Pricing & Payment Setup
+              </button>
+            </div>
           </div>
         )}
 
@@ -796,6 +816,16 @@ export default function AdminSettingsPage() {
                 />
               </div>
             </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Secretariat & Contact Info
+              </button>
+            </div>
           </div>
         )}
 
@@ -863,6 +893,16 @@ export default function AdminSettingsPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Social Media Channels
+              </button>
             </div>
           </div>
         )}
@@ -946,6 +986,16 @@ export default function AdminSettingsPage() {
                 </div>
               ))}
             </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Categories Roster
+              </button>
+            </div>
           </div>
         )}
 
@@ -1026,6 +1076,16 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
             </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Policies & About Content
+              </button>
+            </div>
           </div>
         )}
 
@@ -1104,6 +1164,16 @@ export default function AdminSettingsPage() {
                   <span className="font-semibold text-white">2 Hours</span>
                 </label>
               </div>
+            </div>
+
+            <div className="md:col-span-2 flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase flex items-center gap-1.5 transition shadow"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Gamification & Reminders
+              </button>
             </div>
           </div>
         )}

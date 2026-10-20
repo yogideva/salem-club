@@ -44,7 +44,7 @@ export default function MembersDirectoryPage() {
 
   const currentMemberId = currentUser?.id || 'm1';
 
-  if (role === 'visitor' && !currentUser) {
+  if (!currentUser) {
     return (
       <MemberAccessGate
         title="Member Directory is Members-Only"

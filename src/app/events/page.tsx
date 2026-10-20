@@ -34,11 +34,11 @@ export default function EventsListingPage() {
 
   const categories = ['All', 'Networking', 'Masterclass', 'Outdoor Activity', 'Dinner', 'Business Meetup'];
 
-  if (role === 'visitor' && !currentUser) {
+  if (!currentUser) {
     return (
       <MemberAccessGate
         title="Club Events & Conclaves"
-        description="Exclusive closed-door business conclaves, masterclasses, and networking dinners are reserved for registered club members."
+        description="Exclusive closed-door business conclaves, masterclasses, and networking dinners are reserved exclusively for registered club members. Please sign up or log in to view events."
         featureName="Club Events"
       />
     );
