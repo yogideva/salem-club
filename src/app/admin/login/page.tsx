@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Lock, User, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { ShieldAlert, Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { loginAsAdmin } = useAuth();
-  const [username, setUsername] = useState('admin@salementrepreneursclub.com');
-  const [password, setPassword] = useState('Admin@SEC2026');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
@@ -20,13 +20,8 @@ export default function AdminLoginPage() {
     if (success) {
       router.push('/admin');
     } else {
-      setError('Invalid admin credentials. Please verify your administrative access.');
+      setError('Invalid admin credentials. Please verify your username and password.');
     }
-  };
-
-  const handleAutoFill = () => {
-    setUsername('admin@salementrepreneursclub.com');
-    setPassword('Admin@SEC2026');
   };
 
   return (
@@ -97,21 +92,6 @@ export default function AdminLoginPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Demo Fast Autofill Pill */}
-        <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-            <span>Evaluation demo credentials ready</span>
-          </div>
-          <button
-            type="button"
-            onClick={handleAutoFill}
-            className="text-[11px] font-bold text-amber-400 hover:text-amber-300 underline"
-          >
-            Auto-fill
-          </button>
-        </div>
 
         <div className="pt-2 text-center text-xs text-slate-500">
           <Link href="/login" className="hover:text-slate-300 transition">

@@ -39,15 +39,15 @@ function JoinContent() {
   const [email, setEmail] = useState('');
   const [businessName, setBusinessBusiness] = useState('');
   const [category, setCategory] = useState(categories[0]?.name || 'IT & Software');
-  const [designation, setDesignation] = useState('Founder & Managing Director');
+  const [designation, setDesignation] = useState('');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('Fairlands, Salem');
+  const [location, setLocation] = useState('');
   const [instagram, setInstagram] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [website, setWebsite] = useState('');
   const [whyJoin, setWhyJoin] = useState('');
   const [referralCode, setReferralCode] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
 
   // Newly Created Member State
@@ -55,7 +55,7 @@ function JoinContent() {
 
   // Payment Verification Fields
   const [upiRefId, setUpiRefId] = useState('');
-  const [screenshotUrl, setScreenshotUrl] = useState('https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&fit=crop');
+  const [screenshotUrl, setScreenshotUrl] = useState('');
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [upiQrDataUrl, setUpiQrDataUrl] = useState('');
 

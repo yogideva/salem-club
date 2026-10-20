@@ -116,9 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const matchesPassword =
       pass === storedCreds.password ||
-      pass === defaultPass ||
-      pass === 'admin123' ||
-      pass === 'secadmin';
+      pass === defaultPass;
 
     if (matchesUsername && matchesPassword) {
       const admin = {

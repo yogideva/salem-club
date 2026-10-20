@@ -32,7 +32,7 @@ import { AdminSettings, BusinessCategory, Member } from '@/types';
 function MemberAuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loginAsMember, switchMember } = useAuth();
+  const { loginAsMember } = useAuth();
 
   // Active Tab: 'login' | 'signup'
   const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
@@ -43,8 +43,8 @@ function MemberAuthContent() {
   const [categories, setCategories] = useState<BusinessCategory[]>(SECStore.getCategories());
 
   // Login Form State
-  const [identifier, setIdentifier] = useState('saravanan@kongutech.com');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
   // Sign Up Form State — Step 1 = Details, 2 = Payment QR, 3 = Confirmation
@@ -54,8 +54,8 @@ function MemberAuthContent() {
   const [email, setEmail] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [category, setCategory] = useState(categories[0]?.name || 'IT & Software');
-  const [designation, setDesignation] = useState('Founder & Managing Director');
-  const [location, setLocation] = useState('Fairlands, Salem');
+  const [designation, setDesignation] = useState('');
+  const [location, setLocation] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [instagram, setInstagram] = useState('');
   const [description, setDescription] = useState('');
@@ -117,11 +117,6 @@ function MemberAuthContent() {
     } else {
       setLoginError('Member profile not found. Please check your email/phone or register as a new member.');
     }
-  };
-
-  const handleQuickDemoLogin = (memberId: string) => {
-    switchMember(memberId);
-    router.push('/dashboard');
   };
 
   // Sign Up Step 1 -> Step 2
@@ -324,7 +319,7 @@ function MemberAuthContent() {
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="saravanan@kongutech.com"
+                    placeholder="Enter registered email or phone"
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
@@ -355,53 +350,6 @@ function MemberAuthContent() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
-
-            {/* Quick Demo Logins for Instant Testing */}
-            <div className="pt-2 border-t border-slate-800">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
-                One-Click Demo Profiles:
-              </p>
-              <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin('m1')}
-                  className="w-full text-left p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-xs text-slate-300 flex items-center justify-between transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="font-semibold text-white">Saravanan Muthusamy</span>
-                    <span className="text-slate-500 text-[10px]">• IT Software MD</span>
-                  </div>
-                  <span className="text-[10px] text-amber-400 font-bold">Login →</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin('m2')}
-                  className="w-full text-left p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-xs text-slate-300 flex items-center justify-between transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" />
-                    <span className="font-semibold text-white">Dr. Priya Senthilkumar</span>
-                    <span className="text-slate-500 text-[10px]">• Food/Sago Export</span>
-                  </div>
-                  <span className="text-[10px] text-amber-400 font-bold">Login →</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin('m3')}
-                  className="w-full text-left p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 text-xs text-slate-300 flex items-center justify-between transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-400" />
-                    <span className="font-semibold text-white">Rajesh K. Palanisamy</span>
-                    <span className="text-slate-500 text-[10px]">• Steel & Foundry</span>
-                  </div>
-                  <span className="text-[10px] text-amber-400 font-bold">Login →</span>
-                </button>
-              </div>
-            </div>
 
             <div className="pt-2 text-center space-y-2 text-xs">
               <p className="text-slate-400">
