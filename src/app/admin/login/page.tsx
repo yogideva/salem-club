@@ -66,19 +66,21 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md bg-[#0F172A] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center mx-auto text-slate-950 font-black shadow-xl shadow-amber-500/20">
-            <ShieldCheck className="w-8 h-8" />
+        <div className="text-center space-y-3">
+          <div className="h-16 px-4 py-2 rounded-2xl bg-white flex items-center justify-center mx-auto shadow-xl border border-amber-400/40 w-fit">
+            <img src="/images/sec-logo.png" alt="Salem Entrepreneurs Forum" className="h-10 w-auto object-contain" />
           </div>
-          <span className="text-[10px] font-black tracking-widest uppercase text-amber-400 block">
-            Executive Secretariat
-          </span>
-          <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-            SEC Admin Console
-          </h1>
-          <p className="text-xs text-slate-400">
-            Authorized administration portal for members, conclaves, payments, and CMS.
-          </p>
+          <div>
+            <span className="text-[10px] font-black tracking-widest uppercase text-amber-400 block">
+              Executive Secretariat
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+              SEF Admin Console
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Authorized administration portal for members, conclaves, payments, and CMS.
+            </p>
+          </div>
         </div>
 
         {/* Lockout Warning Banner */}

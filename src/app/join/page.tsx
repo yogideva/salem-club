@@ -23,6 +23,7 @@ import {
   Key,
   Eye,
   EyeOff,
+  Camera,
 } from 'lucide-react';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { Member, BusinessCategory, AdminSettings } from '@/types';
@@ -59,6 +60,19 @@ function JoinContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setAvatarUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Newly Created Member State
   const [createdMember, setCreatedMember] = useState<Member | null>(null);
@@ -268,12 +282,17 @@ function JoinContent() {
       {/* STEP 1: MEMBERSHIP APPLICATION FORM */}
       {step === 1 && (
         <div className="bg-[#0F172A] border border-amber-500/25 rounded-3xl p-6 sm:p-10 shadow-2xl">
-          <div className="text-center max-w-xl mx-auto mb-8 space-y-2">
-            <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/30">
-              Exclusive Member Cohort
-            </span>
+          <div className="text-center max-w-xl mx-auto mb-8 space-y-3">
+            <div className="h-16 px-4 py-2 rounded-2xl bg-white flex items-center justify-center mx-auto shadow-xl border border-amber-400/40 w-fit">
+              <img src={settings.logoUrl || '/images/sec-logo.png'} alt={settings.clubName || 'Salem Entrepreneurs Forum'} className="h-10 w-auto object-contain" />
+            </div>
+            <div>
+              <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/30">
+                Exclusive Member Cohort
+              </span>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">
-              Join Salem Entrepreneurs Club
+              Join {settings.clubName || 'Salem Entrepreneurs Forum'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400">
               Apply to join Salem&apos;s verified business circle. Annual Membership fee is{' '}
@@ -345,15 +364,33 @@ function JoinContent() {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Profile Photo URL
+                    Profile Photo / Headshot
                   </label>
-                  <input
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-12 h-12 rounded-xl bg-slate-850 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-5 h-5 text-slate-500" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-300 cursor-pointer transition w-full justify-center">
+                        <Upload className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{avatarUrl ? 'Change Uploaded Photo' : 'Upload Member Photo'}</span>
+                        <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                      </label>
+                    </div>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="text-xs text-red-400 hover:text-red-300 font-semibold"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

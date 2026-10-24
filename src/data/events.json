@@ -1,0 +1,41 @@
+[
+  {
+    "id": "ev-1",
+    "title": "Salem Business Growth Conclave 2026",
+    "description": "Annual flagship gathering of Salem's top entrepreneurs, manufacturers, and startup leaders. Features keynote addresses, panel discussions on regional trade expansion, and curated B2B networking sessions.",
+    "date": "2026-11-15",
+    "startTime": "09:30 AM",
+    "endTime": "05:30 PM",
+    "venue": "Radisson Salem Grand Ballroom, Mamangam Main Road, Salem",
+    "category": "Networking",
+    "imageUrl": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=1000&fit=crop",
+    "maxParticipants": 150,
+    "registeredCount": 0,
+    "registrationFee": 1000,
+    "dressCode": "Business Formal / Smart Casuals",
+    "isPublished": true,
+    "agenda": [
+      { "time": "09:30 AM", "title": "Registration & Welcome Networking Breakfast" },
+      { "time": "10:30 AM", "title": "Keynote: Scaling Kongu Manufacturing on Global Stage" },
+      { "time": "12:00 PM", "title": "Panel: Access to Capital & Private Equity for Regional MSMEs" },
+      { "time": "01:30 PM", "title": "Executive Networking Lunch" },
+      { "time": "03:00 PM", "title": "B2B Speed Collaboration & Referral Rounds" },
+      { "time": "04:45 PM", "title": "Closing Remarks & High Tea" }
+    ],
+    "speakers": [
+      {
+        "name": "K. Sengottaiyan",
+        "role": "Chairman & Managing Director",
+        "company": "Kongu Industrial Conglomerate",
+        "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&fit=crop"
+      },
+      {
+        "name": "Dr. V. Rajeshwari",
+        "role": "Founder & CEO",
+        "company": "Apex Bio-Solutions & Agro",
+        "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&fit=crop"
+      }
+    ],
+    "tags": ["Flagship", "Manufacturing", "B2B", "Networking"]
+  }
+]

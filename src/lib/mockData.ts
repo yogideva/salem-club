@@ -32,8 +32,8 @@ export const INITIAL_CATEGORIES: BusinessCategory[] = [
 ];
 
 export const INITIAL_SETTINGS: AdminSettings = {
-  clubName: 'Salem Entrepreneurs Club',
-  tagline: 'Where Entrepreneurs Connect, Collaborate, Have Fun & Grow Together.',
+  clubName: 'Salem Entrepreneurs Forum',
+  tagline: 'Meet. Learn. Collaborate. Grow.',
   logoUrl: '/images/sec-logo.png',
   membershipFee: 5000,
   membershipDurationMonths: 12,

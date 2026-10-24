@@ -85,6 +85,33 @@ if (typeof window !== 'undefined') {
   }
 }
 
+// Auto-sync settings from server to ensure all devices (mobile & desktop) stay in sync
+if (typeof window !== 'undefined') {
+  fetch('/api/settings', { cache: 'no-store' })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((serverSettings) => {
+      if (serverSettings && (serverSettings.membershipFee || serverSettings.clubName)) {
+        const local = getStoredItem<AdminSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+        const merged = { ...local, ...serverSettings };
+        setStoredItem(STORAGE_KEYS.SETTINGS, merged);
+        notifyListeners();
+      }
+    })
+    .catch(() => {});
+
+  fetch('/api/events', { cache: 'no-store' })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((serverEvents) => {
+      if (Array.isArray(serverEvents) && serverEvents.length > 0) {
+        const local = getStoredItem<SECEvent[]>(STORAGE_KEYS.EVENTS, INITIAL_EVENTS);
+        // Merge or replace
+        setStoredItem(STORAGE_KEYS.EVENTS, serverEvents);
+        notifyListeners();
+      }
+    })
+    .catch(() => {});
+}
+
 function getStoredItem<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
   try {
@@ -165,6 +192,15 @@ export const SECStore = {
     setStoredItem(STORAGE_KEYS.SETTINGS, updated);
     this.addAuditLog('Updated Settings', 'AdminSettings', 'global', 'Updated club settings and policies', adminName);
     notifyListeners();
+
+    // Sync to server storage so mobile phones and laptops stay synchronized
+    if (typeof window !== 'undefined') {
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch((err) => console.warn('Cloud settings sync notice:', err));
+    }
   },
 
   getAdminCredentials(): { username: string; password: string } {
@@ -272,9 +308,18 @@ export const SECStore = {
 
   addEvent(event: SECEvent, adminName = 'Super Admin'): void {
     const events = this.getEvents();
-    setStoredItem(STORAGE_KEYS.EVENTS, [event, ...events]);
+    const updated = [event, ...events];
+    setStoredItem(STORAGE_KEYS.EVENTS, updated);
     this.addAuditLog('Created Event', 'Event', event.id, `Created event: ${event.title}`, adminName);
     notifyListeners();
+
+    if (typeof window !== 'undefined') {
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch((err) => console.warn('Cloud events sync notice:', err));
+    }
   },
 
   updateEvent(id: string, partial: Partial<SECEvent>, adminName = 'Super Admin'): void {
@@ -282,6 +327,14 @@ export const SECStore = {
     setStoredItem(STORAGE_KEYS.EVENTS, events);
     this.addAuditLog('Updated Event', 'Event', id, `Updated event: ${partial.title || id}`, adminName);
     notifyListeners();
+
+    if (typeof window !== 'undefined') {
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(events),
+      }).catch((err) => console.warn('Cloud events sync notice:', err));
+    }
   },
 
   deleteEvent(id: string, adminName = 'Super Admin'): void {
@@ -289,6 +342,14 @@ export const SECStore = {
     setStoredItem(STORAGE_KEYS.EVENTS, events);
     this.addAuditLog('Deleted Event', 'Event', id, `Deleted event ID: ${id}`, adminName);
     notifyListeners();
+
+    if (typeof window !== 'undefined') {
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(events),
+      }).catch((err) => console.warn('Cloud events sync notice:', err));
+    }
   },
 
   // Event Registrations & Attendance

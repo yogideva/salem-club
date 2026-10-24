@@ -17,6 +17,8 @@ import {
   QrCode,
   CheckCircle2,
   AlertCircle,
+  Upload,
+  ImageIcon,
 } from 'lucide-react';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { SECEvent, EventRegistration } from '@/types';
@@ -54,6 +56,19 @@ export default function AdminEventsPage() {
 
   const currentEvent = events.find((e) => e.id === selectedEventId) || events[0];
   const currentEventRegistrations = registrations.filter((r) => r.eventId === currentEvent?.id);
+
+  const handleEventImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setImageUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault();
@@ -479,6 +494,55 @@ export default function AdminEventsPage() {
                     onChange={(e) => setDressCode(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                   />
+                </div>
+              </div>
+
+              {/* Event Image / Banner Upload Column */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-amber-400" /> Event Banner / Poster Image
+                  </label>
+                  <span className="text-[10px] text-slate-500">Upload poster or banner for calendar</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                  <div className="relative border-2 border-dashed border-slate-700 hover:border-amber-400/60 rounded-2xl p-4 text-center cursor-pointer bg-slate-900/60 transition group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEventImageUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center justify-center space-y-1.5">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center group-hover:scale-105 transition">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-bold text-white">Upload Event Poster</span>
+                      <span className="text-[10px] text-slate-400">Tap / click to browse photo</span>
+                    </div>
+                  </div>
+
+                  {imageUrl ? (
+                    <div className="relative h-28 rounded-2xl overflow-hidden border border-slate-700 group bg-slate-950">
+                      <img src={imageUrl} alt="Event Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="absolute top-2 right-2 p-1 rounded-lg bg-black/75 hover:bg-red-500 text-white text-xs transition"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-black/75 text-emerald-400">
+                        ✓ Image Attached
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="h-28 rounded-2xl border border-slate-800 bg-slate-900/40 flex items-center justify-center text-xs text-slate-500">
+                      No poster selected yet
+                    </div>
+                  )}
                 </div>
               </div>
 

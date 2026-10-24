@@ -139,10 +139,21 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto space-y-6">
+            {/* Official Logo Display */}
+            <div className="flex justify-center">
+              <div className="h-20 sm:h-24 px-6 py-2 rounded-2xl bg-white shadow-2xl border border-amber-400/40 flex items-center justify-center transition-transform hover:scale-105">
+                <img
+                  src={settings.logoUrl || '/images/sec-logo.png'}
+                  alt={settings.clubName || 'Salem Entrepreneurs Forum'}
+                  className="h-12 sm:h-16 w-auto object-contain"
+                />
+              </div>
+            </div>
+
             {/* Tagline Pill */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-bold tracking-wider uppercase shadow-inner">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Connect • Collaborate • Grow</span>
+              <span>{settings.tagline || 'Meet. Learn. Collaborate. Grow.'}</span>
             </div>
 
             {/* Main Headline */}

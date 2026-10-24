@@ -1,0 +1,37 @@
+{
+  "clubName": "Salem Entrepreneurs Forum",
+  "tagline": "Meet. Learn. Collaborate. Grow.",
+  "logoUrl": "/images/sec-logo.png",
+  "membershipFee": 5000,
+  "membershipDurationMonths": 12,
+  "referralPercentage": 10,
+  "upiId": "salementrepreneurs@okaxis",
+  "gpayNumber": "+91 98427 88990",
+  "qrCodeUrl": "",
+  "paymentInstructions": "Scan the QR code or send payment to the official UPI ID. After payment, copy the 12-digit UTR/Transaction Reference ID and attach your payment screenshot proof below for instant verification.",
+  "contactPhone": "+91 98427 88990",
+  "contactEmail": "connect@salementrepreneursclub.com",
+  "contactAddress": "4th Floor, Apex Business Center, Fairlands Main Road, Salem - 636016, Tamil Nadu",
+  "whatsappNumber": "+91 98427 88990",
+  "instagramUrl": "https://instagram.com/salementrepreneursclub",
+  "facebookUrl": "https://facebook.com/salementrepreneursclub",
+  "youtubeUrl": "https://youtube.com/@salementrepreneurs",
+  "linkedinUrl": "https://linkedin.com/company/salem-entrepreneurs-club",
+  "aboutText": "Salem Entrepreneurs Forum (SEF) is the premier business and networking coalition designed specifically for ambitious business owners, startup founders, manufacturers, and trade leaders across Salem and the Kongu region. Born from a vision to break the traditional silos of local commerce, SEF connects dynamic minds across diverse industries to unlock collaborative partnerships, high-value referral pipelines, and mutual growth.",
+  "missionText": "To create a vibrant entrepreneurial ecosystem where business owners can connect with like-minded people, exchange ideas, generate opportunities, build meaningful relationships, and grow together.",
+  "visionText": "To build one of the most active entrepreneur communities in Tamil Nadu where business, friendship, collaboration, and opportunity come together.",
+  "termsText": "Membership is by peer application and review. All members are expected to maintain the highest standards of professional ethics, respect peer confidentiality, and actively support mutual community growth.",
+  "privacyText": "Your privacy is paramount. SEF provides member-controlled visibility preferences. Private contact details are never sold or exposed to unauthorized third parties.",
+  "gamification": {
+    "eventAttendancePoints": 10,
+    "referralPoints: 50": 50,
+    "postPoints": 2,
+    "connectionPoints": 5
+  },
+  "reminders": {
+    "sevenDays": true,
+    "oneDay": true,
+    "twoHours": true
+  },
+  "updatedAt": "2026-10-24T13:58:00.000Z"
+}

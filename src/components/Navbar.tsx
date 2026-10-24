@@ -77,15 +77,19 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center justify-between h-16 sm:h-18">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-base tracking-wider transition-transform group-hover:scale-105">
-                SEC
+              <div className="h-10 sm:h-12 px-2.5 py-1 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-amber-500/10 border border-amber-400/30 transition-transform group-hover:scale-105">
+                <img
+                  src={settings.logoUrl || '/images/sec-logo.png'}
+                  alt={settings.clubName || 'Salem Entrepreneurs Forum'}
+                  className="h-7 sm:h-8 w-auto object-contain"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="text-sm sm:text-base font-black tracking-wider uppercase text-white group-hover:text-amber-400 transition">
-                  {settings.clubName || 'Salem Entrepreneurs Club'}
+                  {settings.clubName || 'Salem Entrepreneurs Forum'}
                 </span>
                 <span className="text-[10px] tracking-widest text-amber-400 uppercase font-semibold">
-                  Private Network
+                  {settings.tagline || 'Meet. Learn. Collaborate. Grow.'}
                 </span>
               </div>
             </Link>

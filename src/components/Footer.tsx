@@ -28,15 +28,19 @@ export const Footer: React.FC = () => {
           {/* Brand & Mission column */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center text-slate-950 font-black text-base shadow-lg shadow-amber-500/20">
-                SEC
+              <div className="h-12 px-3 py-1.5 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-amber-500/10 border border-amber-400/30">
+                <img
+                  src={settings.logoUrl || '/images/sec-logo.png'}
+                  alt={settings.clubName || 'Salem Entrepreneurs Forum'}
+                  className="h-8 w-auto object-contain"
+                />
               </div>
               <div>
                 <span className="text-base font-black tracking-wider uppercase text-white block">
-                  Salem Entrepreneurs Club
+                  {settings.clubName || 'Salem Entrepreneurs Forum'}
                 </span>
                 <span className="text-xs text-amber-400 font-medium">
-                  Connect. Collaborate. Grow.
+                  {settings.tagline || 'Meet. Learn. Collaborate. Grow.'}
                 </span>
               </div>
             </div>

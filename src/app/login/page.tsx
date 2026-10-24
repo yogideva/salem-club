@@ -27,6 +27,8 @@ import {
   EyeOff,
   Key,
   Clock,
+  Camera,
+  User,
 } from 'lucide-react';
 import { InstagramIcon } from '@/components/SocialIcons';
 import { useAuth } from '@/lib/authContext';
@@ -85,6 +87,20 @@ function MemberAuthContent() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [memberPhoto, setMemberPhoto] = useState('');
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setMemberPhoto(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Payment Step State
   const [upiRefId, setUpiRefId] = useState('');
@@ -218,7 +234,7 @@ function MemberAuthContent() {
       email: cleanEmail,
       phone: cleanPhone,
       whatsapp: cleanPhone,
-      avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop`,
+      avatarUrl: memberPhoto || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop`,
       bio: cleanDescription || `${cleanDesignation} at ${cleanBusinessName}.`,
       role: 'member',
       status: 'payment_pending',
@@ -318,14 +334,14 @@ function MemberAuthContent() {
       <div className="w-full max-w-xl bg-[#0F172A] border border-amber-500/25 rounded-3xl p-6 sm:p-9 shadow-2xl space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center mx-auto text-slate-950 font-black text-lg shadow-lg shadow-amber-500/20">
-            SEC
+          <div className="h-16 px-4 py-2 rounded-2xl bg-white flex items-center justify-center mx-auto shadow-xl border border-amber-400/40 w-fit">
+            <img src={settings.logoUrl || '/images/sec-logo.png'} alt={settings.clubName || 'Salem Entrepreneurs Forum'} className="h-10 w-auto object-contain" />
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-            Salem Entrepreneurs Club
+            {settings.clubName || 'Salem Entrepreneurs Forum'}
           </h1>
           <p className="text-xs text-amber-400 font-semibold tracking-wide">
-            Connect • Collaborate • Grow
+            {settings.tagline || 'Meet. Learn. Collaborate. Grow.'}
           </p>
         </div>
 
@@ -541,6 +557,48 @@ function MemberAuthContent() {
             {/* STEP 1: MEMBER & BUSINESS DETAILS */}
             {signupStep === 1 && (
               <form onSubmit={handleProceedToPayment} className="space-y-4">
+                {/* Member Profile Photo Upload */}
+                <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-4">
+                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-slate-800 border-2 border-amber-400/40 shrink-0 flex items-center justify-center group shadow-md">
+                    {memberPhoto ? (
+                      <img src={memberPhoto} alt="Profile Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-500">
+                        <User className="w-7 h-7 text-slate-400" />
+                      </div>
+                    )}
+                    <label className="absolute inset-0 bg-black/40 hover:bg-black/60 flex items-center justify-center cursor-pointer transition text-white opacity-0 hover:opacity-100">
+                      <Camera className="w-5 h-5" />
+                      <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                    </label>
+                  </div>
+
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-amber-400" /> Member Profile Photo (Optional)
+                      </span>
+                      {memberPhoto && (
+                        <button
+                          type="button"
+                          onClick={() => setMemberPhoto('')}
+                          className="text-[10px] text-red-400 hover:text-red-300 font-semibold underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      Upload your professional headshot for your Digital Membership Card & VIP Directory.
+                    </p>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-semibold text-amber-300 cursor-pointer transition">
+                      <Upload className="w-3 h-3 text-amber-400" />
+                      <span>{memberPhoto ? 'Change Photo' : 'Upload Member Photo'}</span>
+                      <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="text-[11px] font-semibold text-slate-300 block mb-1">
