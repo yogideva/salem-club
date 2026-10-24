@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
+import { sanitizeGitUrl, sanitizeGitBranch, sanitizeCommitMessage } from '@/lib/security';
 
 const execAsync = promisify(exec);
 
@@ -30,6 +31,9 @@ function resolveGitPath(): string {
   return 'git';
 }
 
+// In-memory rate limiting for git operations (1 push per 8 seconds)
+let lastPushTimestamp = 0;
+
 export async function POST(request: Request) {
   const logs: string[] = [];
 
@@ -38,21 +42,38 @@ export async function POST(request: Request) {
   };
 
   try {
-    const body = await request.json();
-    const remoteUrl = (body.remoteUrl || '').trim();
-    const commitMessage = (body.commitMessage || 'Update Salem Entrepreneurs Club').trim();
-    const branch = (body.branch || 'main').trim();
-
-    if (!remoteUrl) {
+    // 1. Rate Limiting Check
+    const now = Date.now();
+    if (now - lastPushTimestamp < 8000) {
       return NextResponse.json(
         {
           success: false,
-          error: 'GitHub Repository URL is required (e.g. https://github.com/username/repo.git)',
+          error: 'Rate limit active: A Git synchronization is already running or was executed moments ago. Please wait 8 seconds.',
+          logs,
+        },
+        { status: 429 }
+      );
+    }
+    lastPushTimestamp = now;
+
+    const body = await request.json();
+
+    // 2. Security Validation & Sanitization
+    const urlValidation = sanitizeGitUrl(body.remoteUrl);
+    if (!urlValidation.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: urlValidation.error || 'Invalid GitHub repository URL.',
           logs,
         },
         { status: 400 }
       );
     }
+
+    const remoteUrl = urlValidation.sanitized;
+    const branch = sanitizeGitBranch(body.branch);
+    const commitMessage = sanitizeCommitMessage(body.commitMessage);
 
     const git = resolveGitPath();
     log(`Using Git: ${git}`);
@@ -69,7 +90,7 @@ export async function POST(request: Request) {
       },
     };
 
-    // 1. Check if git repo is initialized
+    // 3. Check if git repo is initialized
     const gitDir = path.join(projectRoot, '.git');
     if (!fs.existsSync(gitDir)) {
       log('Initializing fresh Git repository...');
@@ -79,7 +100,7 @@ export async function POST(request: Request) {
       log('Git repository detected.');
     }
 
-    // 2. Configure identity if not set
+    // 4. Configure identity if not set
     try {
       await execAsync(`${git} config user.name`, execOpts);
     } catch {
@@ -94,7 +115,7 @@ export async function POST(request: Request) {
       await execAsync(`${git} config user.email "admin@salementrepreneursclub.com"`, execOpts);
     }
 
-    // 3. Configure remote origin
+    // 5. Configure remote origin safely
     let hasOrigin = false;
     try {
       const { stdout } = await execAsync(`${git} remote -v`, execOpts);
@@ -113,7 +134,7 @@ export async function POST(request: Request) {
       await execAsync(`${git} remote add origin "${remoteUrl}"`, execOpts);
     }
 
-    // 4. Ensure current branch is named correctly
+    // 6. Ensure current branch is named correctly
     try {
       await execAsync(`${git} branch -M ${branch}`, execOpts);
       log(`Active branch set to ${branch}`);
@@ -121,15 +142,16 @@ export async function POST(request: Request) {
       log(`Branch set warning: ${e.message}`);
     }
 
-    // 5. Stage all changes
+    // 7. Stage all changes
     log('Staging files (git add .)...');
     await execAsync(`${git} add .`, execOpts);
     log('All modified and new files staged.');
 
-    // 6. Commit changes
+    // 8. Commit changes safely
     log(`Committing changes: "${commitMessage}"...`);
     try {
-      const { stdout: commitOut } = await execAsync(`${git} commit -m "${commitMessage.replace(/"/g, '\\"')}"`, execOpts);
+      const safeCommitMsg = commitMessage.replace(/"/g, '\\"');
+      const { stdout: commitOut } = await execAsync(`${git} commit -m "${safeCommitMsg}"`, execOpts);
       log(commitOut.trim());
     } catch (commitErr: any) {
       if (commitErr.stdout && commitErr.stdout.includes('nothing to commit')) {
@@ -139,7 +161,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 7. Push to GitHub
+    // 9. Push to GitHub
     log(`Pushing to GitHub (${remoteUrl} -> ${branch})...`);
     try {
       const { stdout: pushOut, stderr: pushErr } = await execAsync(
@@ -159,21 +181,27 @@ export async function POST(request: Request) {
       const errMsg = pushErr.stderr || pushErr.message || String(pushErr);
       log(`Push error: ${errMsg}`);
 
-      return NextResponse.json({
-        success: false,
-        error: `Git push failed: ${errMsg}`,
-        hint: errMsg.includes('Authentication') || errMsg.includes('Permission denied')
-          ? 'Authentication failed: If using HTTPS with a private repo or 2FA, please use a Personal Access Token in the URL: https://YOUR_TOKEN@github.com/username/repo.git'
-          : 'Check if the repository exists on GitHub and you have write permissions.',
-        logs,
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Git push failed: ${errMsg}`,
+          hint: errMsg.includes('Authentication') || errMsg.includes('Permission denied')
+            ? 'Authentication failed: If using HTTPS with a private repo or 2FA, please use a Personal Access Token in the URL: https://YOUR_TOKEN@github.com/username/repo.git'
+            : 'Check if the repository exists on GitHub and you have write permissions.',
+          logs,
+        },
+        { status: 500 }
+      );
     }
   } catch (err: any) {
     log(`Unexpected error: ${err.message || String(err)}`);
-    return NextResponse.json({
-      success: false,
-      error: err.message || 'Failed to execute git push',
-      logs,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: err.message || 'Failed to execute git push',
+        logs,
+      },
+      { status: 500 }
+    );
   }
 }

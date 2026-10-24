@@ -50,6 +50,7 @@ import { useAuth } from '@/lib/authContext';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { AdminSettings, AuditLog, BusinessCategory } from '@/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { sanitizeInput, sanitizeGitUrl, sanitizeGitBranch, sanitizeCommitMessage } from '@/lib/security';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<AdminSettings>(SECStore.getSettings());
@@ -232,29 +233,29 @@ export default function AdminSettingsPage() {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     const updatedSettingsPayload: Partial<AdminSettings> = {
-      clubName: clubName.trim(),
-      tagline: tagline.trim(),
+      clubName: sanitizeInput(clubName),
+      tagline: sanitizeInput(tagline),
       logoUrl: logoUrl.trim(),
-      membershipFee: Number(membershipFee),
-      membershipDurationMonths: Number(membershipDuration),
-      referralPercentage: Number(referralPercentage),
-      upiId: upiId.trim(),
-      gpayNumber: gpayNumber.trim(),
+      membershipFee: Number(membershipFee) || 5000,
+      membershipDurationMonths: Number(membershipDuration) || 12,
+      referralPercentage: Number(referralPercentage) || 10,
+      upiId: sanitizeInput(upiId),
+      gpayNumber: sanitizeInput(gpayNumber),
       qrCodeUrl: customQrUrl.trim(),
-      paymentInstructions: paymentInstructions.trim(),
-      contactPhone: contactPhone.trim(),
-      whatsappNumber: whatsappNumber.trim(),
-      contactEmail: contactEmail.trim(),
-      contactAddress: contactAddress.trim(),
-      instagramUrl: instagramUrl.trim(),
-      linkedinUrl: linkedinUrl.trim(),
-      youtubeUrl: youtubeUrl.trim(),
-      facebookUrl: facebookUrl.trim(),
-      aboutText: aboutText.trim(),
-      missionText: missionText.trim(),
-      visionText: visionText.trim(),
-      termsText: termsText.trim(),
-      privacyText: privacyText.trim(),
+      paymentInstructions: sanitizeInput(paymentInstructions),
+      contactPhone: sanitizeInput(contactPhone),
+      whatsappNumber: sanitizeInput(whatsappNumber),
+      contactEmail: sanitizeInput(contactEmail),
+      contactAddress: sanitizeInput(contactAddress),
+      instagramUrl: sanitizeInput(instagramUrl),
+      linkedinUrl: sanitizeInput(linkedinUrl),
+      youtubeUrl: sanitizeInput(youtubeUrl),
+      facebookUrl: sanitizeInput(facebookUrl),
+      aboutText: sanitizeInput(aboutText),
+      missionText: sanitizeInput(missionText),
+      visionText: sanitizeInput(visionText),
+      termsText: sanitizeInput(termsText),
+      privacyText: sanitizeInput(privacyText),
       gamification: {
         referralPoints: Number(referralPoints),
         eventAttendancePoints: Number(attendancePoints),
@@ -363,12 +364,14 @@ export default function AdminSettingsPage() {
   // Push to GitHub
   const handleGitHubPush = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!githubRepoUrl.trim()) {
-      alert('Please enter your GitHub repository URL (e.g. https://github.com/yogideva/salem-club.git)');
+    const urlCheck = sanitizeGitUrl(githubRepoUrl);
+    if (!urlCheck.valid) {
+      alert(urlCheck.error || 'Please enter a valid GitHub repository URL.');
       return;
     }
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('sec_github_repo_url', githubRepoUrl.trim());
+      localStorage.setItem('sec_github_repo_url', urlCheck.sanitized);
     }
     setGithubPushing(true);
     setGithubResult(null);
@@ -378,8 +381,8 @@ export default function AdminSettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          remoteUrl: githubRepoUrl.trim(),
-          commitMessage: githubCommitMsg.trim() || 'Update Salem Entrepreneurs Club platform',
+          remoteUrl: urlCheck.sanitized,
+          commitMessage: sanitizeCommitMessage(githubCommitMsg) || 'Update Salem Entrepreneurs Club platform',
         }),
       });
       const data = await res.json();

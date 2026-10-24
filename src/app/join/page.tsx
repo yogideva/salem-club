@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { Member, BusinessCategory, AdminSettings } from '@/types';
+import UpiPaymentButtons from '@/components/UpiPaymentButtons';
+import { sanitizeInput, isValidUTR } from '@/lib/security';
 
 function JoinContent() {
   const searchParams = useSearchParams();
@@ -116,46 +118,59 @@ function JoinContent() {
       return;
     }
 
+    const cleanFullName = sanitizeInput(fullName);
+    const cleanPhone = sanitizeInput(phone);
+    const cleanEmail = sanitizeInput(email);
+    const cleanBusinessName = sanitizeInput(businessName);
+    const cleanDesignation = sanitizeInput(designation);
+    const cleanLocation = sanitizeInput(location);
+    const cleanReferralCode = sanitizeInput(referralCode);
+    const cleanWhyJoin = sanitizeInput(whyJoin);
+    const cleanDescription = sanitizeInput(description);
+    const cleanInstagram = sanitizeInput(instagram);
+    const cleanLinkedin = sanitizeInput(linkedin);
+    const cleanWebsite = sanitizeInput(website);
+
     const newMemberId = `m-${Date.now()}`;
     const codeNumber = Math.floor(100 + Math.random() * 900);
-    const cleanFirstName = fullName.trim().split(' ')[0].toUpperCase();
+    const cleanFirstName = cleanFullName.split(' ')[0].toUpperCase();
     const uniqueReferral = `SEC-${cleanFirstName}-${codeNumber}`;
     const uniqueMemberId = `SEC-2026-${codeNumber}`;
 
     const newMember: Member = {
       id: newMemberId,
       userId: `u-${Date.now()}`,
-      fullName,
-      email,
-      phone,
-      whatsapp: phone,
+      fullName: cleanFullName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      whatsapp: cleanPhone,
       avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop',
-      bio: whyJoin || `${designation} at ${businessName}.`,
+      bio: cleanWhyJoin || `${cleanDesignation} at ${cleanBusinessName}.`,
       role: 'member',
       status: 'payment_pending',
       joinedDate: new Date().toISOString().split('T')[0],
       membershipExpiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       memberIdCode: uniqueMemberId,
       referralCode: uniqueReferral,
-      referredBy: referralCode.trim() || undefined,
+      referredBy: cleanReferralCode || undefined,
       password: newPassword.trim(),
       badges: ['ACTIVE MEMBER'],
       gamificationPoints: 10,
       business: {
         id: `b-${Date.now()}`,
         memberId: newMemberId,
-        businessName,
+        businessName: cleanBusinessName,
         category,
-        designation,
-        description: description || 'Specialized regional enterprise.',
+        designation: cleanDesignation,
+        description: cleanDescription || 'Specialized regional enterprise.',
         productsServices: ['Business Consultations', 'Product Supply'],
-        location,
-        phone,
-        whatsapp: phone,
-        email,
-        website: website || undefined,
-        instagram: instagram || undefined,
-        linkedin: linkedin || undefined,
+        location: cleanLocation,
+        phone: cleanPhone,
+        whatsapp: cleanPhone,
+        email: cleanEmail,
+        website: cleanWebsite || undefined,
+        instagram: cleanInstagram || undefined,
+        linkedin: cleanLinkedin || undefined,
         posterUrl: posterUrl || undefined,
         isPublic: true,
       },
@@ -174,6 +189,12 @@ function JoinContent() {
     e.preventDefault();
     if (!createdMember) return;
 
+    const cleanUtr = sanitizeInput(upiRefId);
+    if (!cleanUtr || !isValidUTR(cleanUtr)) {
+      setFormError('Please enter a valid 12-digit UPI / UTR Transaction Reference ID from your payment app.');
+      return;
+    }
+
     SECStore.submitPayment({
       id: `pay-${Date.now()}`,
       memberId: createdMember.id,
@@ -183,12 +204,12 @@ function JoinContent() {
       phone: createdMember.phone,
       amount: settings.membershipFee,
       paymentType: 'membership',
-      upiTransactionId: upiRefId.trim(),
+      upiTransactionId: cleanUtr,
       screenshotUrl: screenshotUrl || 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&fit=crop',
       status: 'under_review',
       submittedAt: new Date().toISOString(),
-      referralCodeUsed: referralCode.trim() || undefined,
-      adminNotes: 'Awaiting admin statement verification.',
+      referralCodeUsed: sanitizeInput(referralCode) || undefined,
+      adminNotes: 'Direct UPI payment proof submitted via Join page.',
     });
 
     setStep(3); // Confirmation
@@ -636,6 +657,15 @@ function JoinContent() {
                 <p className="text-xl font-black text-amber-400">₹{settings.membershipFee.toLocaleString('en-IN')}</p>
                 <p className="text-[11px] text-slate-400">Valid for {settings.membershipDurationMonths} months</p>
               </div>
+
+              {/* One-Click GPay / PhonePe / Paytm / Any UPI App Buttons */}
+              <UpiPaymentButtons
+                upiId={settings.upiId}
+                payeeName={settings.clubName}
+                amount={settings.membershipFee}
+                transactionNote="SEC Membership Fee"
+                memberId={createdMember?.memberIdCode}
+              />
 
               <p className="text-[11px] text-slate-400 leading-relaxed italic">
                 {settings.paymentInstructions}

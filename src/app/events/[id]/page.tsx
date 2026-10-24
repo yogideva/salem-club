@@ -26,6 +26,7 @@ import { useAuth } from '@/lib/authContext';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { SECEvent, EventRegistration, Member } from '@/types';
 import MemberAccessGate from '@/components/MemberAccessGate';
+import UpiPaymentButtons from '@/components/UpiPaymentButtons';
 
 export default function EventDetailPage({
   params,
@@ -568,6 +569,17 @@ export default function EventDetailPage({
                       >
                         {copiedEventUpi ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                       </button>
+                    </div>
+
+                    {/* Direct UPI / GPay / PhonePe Buttons */}
+                    <div className="w-full pt-2">
+                      <UpiPaymentButtons
+                        upiId={settings.upiId}
+                        payeeName={settings.clubName}
+                        amount={event.registrationFee}
+                        transactionNote={`SEC ${event.title}`}
+                        memberId={currentUser?.memberIdCode}
+                      />
                     </div>
                   </div>
 

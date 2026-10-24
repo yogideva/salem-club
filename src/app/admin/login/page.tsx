@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, Lock, User, ArrowRight, ShieldCheck, Clock } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import { SecurityRateLimiter, sanitizeInput } from '@/lib/security';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -12,17 +13,55 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Check lockout on mount and interval
+  useEffect(() => {
+    const check = () => {
+      const status = SecurityRateLimiter.checkLockout('admin_login');
+      if (status.locked) {
+        setLockoutSeconds(status.remainingSeconds);
+      } else {
+        setLockoutSeconds(0);
+      }
+    };
+
+    check();
+    const timer = setInterval(check, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = loginAsAdmin(username, password);
+
+    // 1. Anti-Brute-Force Lockout Guard
+    const status = SecurityRateLimiter.checkLockout('admin_login');
+    if (status.locked) {
+      setError(`Security Lockout: Too many failed attempts. Access blocked for ${status.remainingSeconds}s.`);
+      return;
+    }
+
+    const cleanUsername = sanitizeInput(username);
+    const success = loginAsAdmin(cleanUsername, password);
+
     if (success) {
+      SecurityRateLimiter.reset('admin_login');
       router.push('/admin');
     } else {
-      setError('Invalid admin credentials. Please verify your username and password.');
+      const attemptStatus = SecurityRateLimiter.recordFailedAttempt('admin_login', cleanUsername);
+      if (attemptStatus.locked) {
+        setLockoutSeconds(attemptStatus.lockoutSeconds);
+        setError(`Security Lockout: 5 failed attempts reached. Administration console locked for 5 minutes.`);
+      } else {
+        setError(
+          `Invalid admin credentials. Warning: ${attemptStatus.remainingAttempts} attempt(s) remaining before security lockout.`
+        );
+      }
     }
   };
+
+  const isLocked = lockoutSeconds > 0;
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
@@ -42,10 +81,20 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        {error && (
+        {/* Lockout Warning Banner */}
+        {isLocked && (
+          <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 font-semibold flex items-center gap-2 animate-pulse">
+            <Clock className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>
+              Brute-Force Protection Active: Login locked for {Math.floor(lockoutSeconds / 60)}m {lockoutSeconds % 60}s.
+            </span>
+          </div>
+        )}
+
+        {error && !isLocked && (
           <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-semibold flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 shrink-0" />
-            {error}
+            <span>{error}</span>
           </div>
         )}
 
@@ -59,10 +108,11 @@ export default function AdminLoginPage() {
               <input
                 type="text"
                 required
+                disabled={isLocked}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="admin@salementrepreneursclub.com"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 disabled:opacity-50"
               />
             </div>
           </div>
@@ -76,19 +126,21 @@ export default function AdminLoginPage() {
               <input
                 type="password"
                 required
+                disabled={isLocked}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 disabled:opacity-50"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition"
+            disabled={isLocked}
+            className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition"
           >
-            <span>Authenticate Admin Session</span>
+            <span>{isLocked ? 'Security Lockout Active' : 'Authenticate Admin Session'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

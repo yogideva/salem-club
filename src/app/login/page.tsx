@@ -26,11 +26,14 @@ import {
   Eye,
   EyeOff,
   Key,
+  Clock,
 } from 'lucide-react';
 import { InstagramIcon } from '@/components/SocialIcons';
 import { useAuth } from '@/lib/authContext';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { AdminSettings, BusinessCategory, Member } from '@/types';
+import UpiPaymentButtons from '@/components/UpiPaymentButtons';
+import { SecurityRateLimiter, sanitizeInput, isValidUTR } from '@/lib/security';
 
 function MemberAuthContent() {
   const router = useRouter();
@@ -50,6 +53,22 @@ function MemberAuthContent() {
   const [password, setPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [memberLockoutSeconds, setMemberLockoutSeconds] = useState(0);
+
+  // Monitor Anti-Brute-Force Lockout
+  useEffect(() => {
+    const check = () => {
+      const status = SecurityRateLimiter.checkLockout('member_login');
+      if (status.locked) {
+        setMemberLockoutSeconds(status.remainingSeconds);
+      } else {
+        setMemberLockoutSeconds(0);
+      }
+    };
+    check();
+    const timer = setInterval(check, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Sign Up Form State — Step 1 = Details, 2 = Payment QR, 3 = Confirmation
   const [signupStep, setSignupStep] = useState<1 | 2 | 3>(1);
@@ -119,7 +138,18 @@ function MemberAuthContent() {
     e.preventDefault();
     setLoginError('');
 
-    if (!identifier.trim()) {
+    // Check anti-brute-force rate limiter
+    const lockCheck = SecurityRateLimiter.checkLockout('member_login');
+    if (lockCheck.locked) {
+      setLoginError(
+        `Security Lockout: Member login is locked for ${lockCheck.remainingSeconds}s due to consecutive failed attempts.`
+      );
+      return;
+    }
+
+    const cleanIdentifier = sanitizeInput(identifier);
+
+    if (!cleanIdentifier) {
       setLoginError('Please enter your registered Email, Mobile, or Member ID.');
       return;
     }
@@ -128,11 +158,20 @@ function MemberAuthContent() {
       return;
     }
 
-    const res = loginAsMember(identifier, password);
+    const res = loginAsMember(cleanIdentifier, password);
     if (res.success) {
+      SecurityRateLimiter.reset('member_login');
       router.push('/dashboard');
     } else {
-      setLoginError(res.error || 'Invalid credentials. Please verify your Email/ID and Password.');
+      const attemptStatus = SecurityRateLimiter.recordFailedAttempt('member_login', cleanIdentifier);
+      if (attemptStatus.locked) {
+        setMemberLockoutSeconds(attemptStatus.lockoutSeconds);
+        setLoginError('Security Lockout: 5 failed attempts reached. Member login locked for 5 minutes.');
+      } else {
+        setLoginError(
+          `${res.error || 'Invalid credentials.'} (Warning: ${attemptStatus.remainingAttempts} attempt(s) remaining)`
+        );
+      }
     }
   };
 
@@ -141,7 +180,17 @@ function MemberAuthContent() {
     e.preventDefault();
     setSignupError('');
 
-    if (!fullName.trim() || !phone.trim() || !email.trim() || !businessName.trim()) {
+    const cleanFullName = sanitizeInput(fullName);
+    const cleanPhone = sanitizeInput(phone);
+    const cleanEmail = sanitizeInput(email);
+    const cleanBusinessName = sanitizeInput(businessName);
+    const cleanDesignation = sanitizeInput(designation);
+    const cleanLocation = sanitizeInput(location);
+    const cleanReferralCode = sanitizeInput(referralCode);
+    const cleanInstagram = sanitizeInput(instagram);
+    const cleanDescription = sanitizeInput(description);
+
+    if (!cleanFullName || !cleanPhone || !cleanEmail || !cleanBusinessName) {
       setSignupError('Please fill in all required fields marked with *');
       return;
     }
@@ -158,42 +207,42 @@ function MemberAuthContent() {
 
     const newMemberId = `m-${Date.now()}`;
     const codeNumber = Math.floor(100 + Math.random() * 900);
-    const cleanFirstName = fullName.trim().split(' ')[0].toUpperCase();
+    const cleanFirstName = cleanFullName.split(' ')[0].toUpperCase();
     const uniqueReferral = `SEC-${cleanFirstName}-${codeNumber}`;
     const uniqueMemberId = `SEC-2026-${codeNumber}`;
 
     const newMember: Member = {
       id: newMemberId,
       userId: `u-${Date.now()}`,
-      fullName: fullName.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      whatsapp: phone.trim(),
+      fullName: cleanFullName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      whatsapp: cleanPhone,
       avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop`,
-      bio: description.trim() || `${designation} at ${businessName}.`,
+      bio: cleanDescription || `${cleanDesignation} at ${cleanBusinessName}.`,
       role: 'member',
       status: 'payment_pending',
       joinedDate: new Date().toISOString().split('T')[0],
       membershipExpiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       memberIdCode: uniqueMemberId,
       referralCode: uniqueReferral,
-      referredBy: referralCode.trim() || undefined,
+      referredBy: cleanReferralCode || undefined,
       password: newPassword.trim(),
       badges: ['ACTIVE MEMBER'],
       gamificationPoints: 10,
       business: {
         id: `b-${Date.now()}`,
         memberId: newMemberId,
-        businessName: businessName.trim(),
+        businessName: cleanBusinessName,
         category,
-        designation,
-        description: description.trim() || 'Regional enterprise member of Salem Entrepreneurs Club.',
+        designation: cleanDesignation,
+        description: cleanDescription || 'Regional enterprise member of Salem Entrepreneurs Club.',
         productsServices: ['Business Consultations', 'Product Supply'],
-        location: location.trim(),
-        phone: phone.trim(),
-        whatsapp: phone.trim(),
-        email: email.trim(),
-        instagram: instagram.trim() || undefined,
+        location: cleanLocation,
+        phone: cleanPhone,
+        whatsapp: cleanPhone,
+        email: cleanEmail,
+        instagram: cleanInstagram || undefined,
         isPublic: true,
       },
       privacy: {
@@ -225,8 +274,9 @@ function MemberAuthContent() {
     e.preventDefault();
     if (!createdMember) return;
 
-    if (!upiRefId.trim()) {
-      setSignupError('Please enter the 12-digit UPI / UTR Transaction Reference ID from your payment app.');
+    const cleanUtr = sanitizeInput(upiRefId);
+    if (!cleanUtr || !isValidUTR(cleanUtr)) {
+      setSignupError('Please enter a valid 12-digit UPI / UTR Transaction Reference ID from your payment app.');
       return;
     }
 
@@ -243,12 +293,12 @@ function MemberAuthContent() {
       phone: createdMember.phone,
       amount: settings.membershipFee,
       paymentType: 'membership',
-      upiTransactionId: upiRefId.trim(),
+      upiTransactionId: cleanUtr,
       screenshotUrl: screenshotPreview || 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&fit=crop',
       status: 'under_review',
       submittedAt: new Date().toISOString(),
-      referralCodeUsed: referralCode.trim() || undefined,
-      adminNotes: 'Submitted via Member Sign Up flow. Awaiting admin bank account verification.',
+      referralCodeUsed: sanitizeInput(referralCode) || undefined,
+      adminNotes: 'Submitted via Member Sign Up flow. Direct UPI / App payment verified.',
     });
 
     setSignupStep(3); // Confirmation
@@ -328,7 +378,17 @@ function MemberAuthContent() {
               </p>
             </div>
 
-            {loginError && (
+            {/* Brute-Force Rate Limit Lockout Banner */}
+            {memberLockoutSeconds > 0 && (
+              <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 font-semibold flex items-center gap-2 animate-pulse">
+                <Clock className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>
+                  Anti-Brute-Force Shield Active: Login locked for {Math.floor(memberLockoutSeconds / 60)}m {memberLockoutSeconds % 60}s.
+                </span>
+              </div>
+            )}
+
+            {loginError && memberLockoutSeconds === 0 && (
               <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{loginError}</span>
@@ -345,10 +405,11 @@ function MemberAuthContent() {
                   <input
                     type="text"
                     required
+                    disabled={memberLockoutSeconds > 0}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="e.g. founder@company.com or SEC-2026-101"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -362,10 +423,11 @@ function MemberAuthContent() {
                   <input
                     type={showLoginPassword ? 'text' : 'password'}
                     required
+                    disabled={memberLockoutSeconds > 0}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your member password"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400 disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -379,9 +441,10 @@ function MemberAuthContent() {
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition"
+                disabled={memberLockoutSeconds > 0}
+                className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition"
               >
-                <span>Sign In as Member</span>
+                <span>{memberLockoutSeconds > 0 ? 'Security Lockout Active' : 'Sign In as Member'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -730,28 +793,16 @@ function MemberAuthContent() {
                     />
                   </div>
 
-                  {/* UPI Details & Copy Button */}
-                  <div className="w-full max-w-sm space-y-2 pt-1">
-                    <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                      <span className="text-slate-400 font-medium">UPI ID:</span>
-                      <span className="font-mono text-amber-400 font-bold">{settings.upiId}</span>
-                      <button
-                        type="button"
-                        onClick={copyUpiId}
-                        className="p-1 rounded text-slate-400 hover:text-white transition"
-                        title="Copy UPI ID"
-                      >
-                        {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
+                  {/* One-Click GPay / PhonePe / Paytm / Any UPI App Buttons */}
+                  <UpiPaymentButtons
+                    upiId={settings.upiId}
+                    payeeName={settings.clubName}
+                    amount={settings.membershipFee}
+                    transactionNote="SEC Membership Fee"
+                    memberId={createdMember.memberIdCode}
+                  />
 
-                    <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                      <span className="text-slate-400 font-medium">GPay / Mobile:</span>
-                      <span className="font-mono text-white font-bold">{settings.gpayNumber}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
+                  <p className="text-[11px] text-slate-400 max-w-xs leading-relaxed pt-1">
                     {settings.paymentInstructions}
                   </p>
                 </div>
