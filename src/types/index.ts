@@ -71,6 +71,7 @@ export interface Member {
     phoneVisible: 'public' | 'members_only' | 'admin_only';
     emailVisible: 'public' | 'members_only' | 'admin_only';
   };
+  password?: string; // Member portal login password
 }
 
 export interface EventSpeaker {

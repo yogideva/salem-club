@@ -23,6 +23,9 @@ import {
   Briefcase,
   AlertCircle,
   ChevronLeft,
+  Eye,
+  EyeOff,
+  Key,
 } from 'lucide-react';
 import { InstagramIcon } from '@/components/SocialIcons';
 import { useAuth } from '@/lib/authContext';
@@ -45,6 +48,7 @@ function MemberAuthContent() {
   // Login Form State
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   // Sign Up Form State — Step 1 = Details, 2 = Payment QR, 3 = Confirmation
@@ -59,6 +63,9 @@ function MemberAuthContent() {
   const [referralCode, setReferralCode] = useState('');
   const [instagram, setInstagram] = useState('');
   const [description, setDescription] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   // Payment Step State
   const [upiRefId, setUpiRefId] = useState('');
@@ -111,11 +118,21 @@ function MemberAuthContent() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
-    const success = loginAsMember(identifier);
-    if (success) {
+
+    if (!identifier.trim()) {
+      setLoginError('Please enter your registered Email, Mobile, or Member ID.');
+      return;
+    }
+    if (!password) {
+      setLoginError('Please enter your member password.');
+      return;
+    }
+
+    const res = loginAsMember(identifier, password);
+    if (res.success) {
       router.push('/dashboard');
     } else {
-      setLoginError('Member profile not found. Please check your email/phone or register as a new member.');
+      setLoginError(res.error || 'Invalid credentials. Please verify your Email/ID and Password.');
     }
   };
 
@@ -126,6 +143,16 @@ function MemberAuthContent() {
 
     if (!fullName.trim() || !phone.trim() || !email.trim() || !businessName.trim()) {
       setSignupError('Please fill in all required fields marked with *');
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      setSignupError('Please create a password of at least 6 characters for your member login.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setSignupError('Passwords do not match. Please verify your confirmation password.');
       return;
     }
 
@@ -151,6 +178,7 @@ function MemberAuthContent() {
       memberIdCode: uniqueMemberId,
       referralCode: uniqueReferral,
       referredBy: referralCode.trim() || undefined,
+      password: newPassword.trim(),
       badges: ['ACTIVE MEMBER'],
       gamificationPoints: 10,
       business: {
@@ -310,7 +338,7 @@ function MemberAuthContent() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Registered Email / Phone / Referral Code
+                  Registered Email, Phone, or Member ID
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
@@ -319,7 +347,7 @@ function MemberAuthContent() {
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="Enter registered email or phone"
+                    placeholder="e.g. founder@company.com or SEC-2026-101"
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
@@ -332,13 +360,20 @@ function MemberAuthContent() {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                   <input
-                    type="password"
+                    type={showLoginPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                    placeholder="Enter your member password"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3.5 top-3 text-slate-400 hover:text-white"
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -595,6 +630,62 @@ function MemberAuthContent() {
                   />
                 </div>
 
+                {/* Account Security / Member Password Setup */}
+                <div className="pt-2 border-t border-slate-800 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                    <Key className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Create Your Member Login Password</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                        Create Password * (min 6 characters)
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                        <input
+                          type={showSignupPassword ? 'text' : 'password'}
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          minLength={6}
+                          className="w-full pl-9 pr-9 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignupPassword(!showSignupPassword)}
+                          className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                        >
+                          {showSignupPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                        Confirm Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                        <input
+                          type={showSignupPassword ? 'text' : 'password'}
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          minLength={6}
+                          className="w-full pl-9 pr-9 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    💡 You will use this password along with your Email or Member ID to log in after sign up.
+                  </p>
+                </div>
+
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-slate-300 flex items-center justify-between">
                   <span>Annual Membership Fee:</span>
                   <span className="font-mono font-black text-amber-400 text-sm">
@@ -754,10 +845,18 @@ function MemberAuthContent() {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-left space-y-2 max-w-sm mx-auto">
+                <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-left space-y-2.5 max-w-sm mx-auto">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Temporary Member ID:</span>
-                    <span className="font-mono font-bold text-white">{createdMember.memberIdCode}</span>
+                    <span className="text-slate-400">Assigned Member ID:</span>
+                    <span className="font-mono font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">{createdMember.memberIdCode}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Registered Email / User ID:</span>
+                    <span className="font-semibold text-white">{createdMember.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Member Password:</span>
+                    <span className="font-mono font-semibold text-emerald-400">•••••••• (Saved)</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Unique Referral Code:</span>
@@ -767,6 +866,15 @@ function MemberAuthContent() {
                     <span className="text-slate-400">Payment Status:</span>
                     <span className="font-semibold text-amber-400">Under Review</span>
                   </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-amber-400/10 border border-amber-400/25 text-left text-xs text-amber-200/90 space-y-1 max-w-sm mx-auto">
+                  <p className="font-bold flex items-center gap-1.5 text-amber-300">
+                    <Lock className="w-3.5 h-3.5" /> Save Your Login Credentials:
+                  </p>
+                  <p className="text-[11px] text-slate-300">
+                    You can log in anytime using either your <strong>Member ID ({createdMember.memberIdCode})</strong> or your <strong>Email ({createdMember.email})</strong> with the password you created.
+                  </p>
                 </div>
 
                 <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">

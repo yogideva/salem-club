@@ -9,7 +9,7 @@ interface AuthContextType {
   currentUser: Member | null;
   adminUser: { name: string; email: string; role: 'admin' } | null;
   isLoading: boolean;
-  loginAsMember: (emailOrPhone: string) => boolean;
+  loginAsMember: (emailOrPhone: string, password?: string) => { success: boolean; error?: string };
   loginAsAdmin: (username: string, pass: string) => boolean;
   updateAdminCredentials: (creds: { username: string; password: string }) => void;
   logout: () => void;
@@ -79,7 +79,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const loginAsMember = (emailOrPhone: string): boolean => {
+  const loginAsMember = (
+    emailOrPhone: string,
+    pass?: string
+  ): { success: boolean; error?: string } => {
     const input = emailOrPhone.trim().toLowerCase();
     const members = SECStore.getMembers();
     const found = members.find(
@@ -90,17 +93,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         m.memberIdCode.toLowerCase() === input
     );
 
-    if (found) {
-      localStorage.setItem(AUTH_STORAGE_KEYS.ROLE, 'member');
-      localStorage.setItem(AUTH_STORAGE_KEYS.MEMBER_ID, found.id);
-      localStorage.removeItem(AUTH_STORAGE_KEYS.ADMIN_SESSION);
-      setRole('member');
-      setCurrentUser(found);
-      setAdminUser(null);
-      return true;
+    if (!found) {
+      return {
+        success: false,
+        error: 'No member profile found with this Email, Mobile, or Member ID. Please sign up first.',
+      };
     }
 
-    return false;
+    // If member has a registered password, verify it strictly
+    if (found.password) {
+      if (!pass || pass !== found.password) {
+        return {
+          success: false,
+          error: 'Incorrect member password. Please enter the password you created during sign up.',
+        };
+      }
+    } else if (pass && pass !== 'password123' && pass !== 'Member@SEC2026') {
+      // Legacy or seed profile without explicit password
+      return {
+        success: false,
+        error: 'Invalid password. Please check your credentials.',
+      };
+    }
+
+    localStorage.setItem(AUTH_STORAGE_KEYS.ROLE, 'member');
+    localStorage.setItem(AUTH_STORAGE_KEYS.MEMBER_ID, found.id);
+    localStorage.removeItem(AUTH_STORAGE_KEYS.ADMIN_SESSION);
+    setRole('member');
+    setCurrentUser(found);
+    setAdminUser(null);
+    return { success: true };
   };
 
   const loginAsAdmin = (username: string, pass: string): boolean => {

@@ -19,6 +19,10 @@ import {
   Mail,
   MapPin,
   ExternalLink,
+  Lock,
+  Key,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { SECStore, subscribeToStore } from '@/lib/store';
 import { Member, BusinessCategory, AdminSettings } from '@/types';
@@ -49,6 +53,10 @@ function JoinContent() {
   const [referralCode, setReferralCode] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState('');
 
   // Newly Created Member State
   const [createdMember, setCreatedMember] = useState<Member | null>(null);
@@ -96,6 +104,17 @@ function JoinContent() {
 
   const handleApplicationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
+
+    if (!newPassword || newPassword.length < 6) {
+      setFormError('Please create a password of at least 6 characters.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setFormError('Passwords do not match. Please verify your password confirmation.');
+      return;
+    }
 
     const newMemberId = `m-${Date.now()}`;
     const codeNumber = Math.floor(100 + Math.random() * 900);
@@ -119,6 +138,7 @@ function JoinContent() {
       memberIdCode: uniqueMemberId,
       referralCode: uniqueReferral,
       referredBy: referralCode.trim() || undefined,
+      password: newPassword.trim(),
       badges: ['ACTIVE MEMBER'],
       gamificationPoints: 10,
       business: {
@@ -468,6 +488,68 @@ function JoinContent() {
               </div>
             </div>
 
+            {/* 4. Portal Login & Password Setup */}
+            <div className="space-y-4 pt-4">
+              <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                <Key className="w-4 h-4" /> 4. Create Member Login Password
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    Password * (min 6 characters)
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={6}
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    Confirm Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={6}
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                💡 You will use this password to log into the SEC Member portal after registration.
+              </p>
+            </div>
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
             <button
               type="submit"
               className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black text-sm uppercase tracking-wider shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 transition"
@@ -625,11 +707,19 @@ function JoinContent() {
             </p>
           </div>
 
-          {/* Member Card Preview Preview */}
-          <div className="max-w-sm mx-auto p-4 rounded-2xl bg-slate-900 border border-slate-800 text-left space-y-2">
+          {/* Member Credentials Preview */}
+          <div className="max-w-sm mx-auto p-4 rounded-2xl bg-slate-900 border border-slate-800 text-left space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Assigned Member ID:</span>
-              <span className="font-mono font-bold text-amber-400">{createdMember.memberIdCode}</span>
+              <span className="font-mono font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">{createdMember.memberIdCode}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">Registered Email / ID:</span>
+              <span className="font-semibold text-white">{createdMember.email}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">Login Password:</span>
+              <span className="font-mono font-semibold text-emerald-400">•••••••• (Saved)</span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Unique Referral Code:</span>
@@ -643,18 +733,27 @@ function JoinContent() {
             </div>
           </div>
 
+          <div className="p-3 rounded-xl bg-amber-400/10 border border-amber-400/25 text-left text-xs text-amber-200/90 space-y-1 max-w-sm mx-auto">
+            <p className="font-bold flex items-center gap-1.5 text-amber-300">
+              <Lock className="w-3.5 h-3.5" /> Save Your Login Credentials:
+            </p>
+            <p className="text-[11px] text-slate-300">
+              You can log in anytime using either your <strong>Member ID ({createdMember.memberIdCode})</strong> or your <strong>Email ({createdMember.email})</strong> with the password you just created.
+            </p>
+          </div>
+
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/login')}
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider transition"
             >
-              Explore Member Dashboard →
+              Sign In to Member Portal →
             </button>
             <button
-              onClick={() => router.push('/admin/payments')}
+              onClick={() => router.push('/dashboard')}
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700"
             >
-              View in Admin Payments (Demo Review)
+              Preview Member Dashboard
             </button>
           </div>
         </div>

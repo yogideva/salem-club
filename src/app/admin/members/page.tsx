@@ -21,6 +21,8 @@ import {
   Mail,
   MapPin,
   Calendar,
+  Lock,
+  Key,
 } from 'lucide-react';
 import { InstagramIcon } from '@/components/SocialIcons';
 import { SECStore, subscribeToStore } from '@/lib/store';
@@ -426,6 +428,27 @@ export default function AdminMembersPage() {
                   </a>
                 </div>
               )}
+
+              {/* Member Login Credentials Info */}
+              <div className="p-3.5 rounded-xl bg-amber-400/10 border border-amber-400/30 space-y-1 sm:col-span-2">
+                <span className="text-[10px] text-amber-300 uppercase font-bold flex items-center gap-1">
+                  <Key className="w-3 h-3 text-amber-400" /> Member Login Credentials (Admin Reference)
+                </span>
+                <div className="flex flex-wrap items-center gap-4 pt-0.5 text-xs">
+                  <div>
+                    <span className="text-slate-400 text-[11px]">Member ID: </span>
+                    <strong className="font-mono text-amber-300">{detailMember.memberIdCode}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[11px]">Email / Login: </span>
+                    <strong className="text-white">{detailMember.email}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[11px]">Password: </span>
+                    <strong className="font-mono text-emerald-300">{detailMember.password || 'Member@SEC2026 (Default)'}</strong>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Description / Products */}
