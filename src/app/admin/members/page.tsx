@@ -76,6 +76,7 @@ export default function AdminMembersPage() {
       Designation: m.business.designation,
       Location: m.business.location,
       Status: m.status,
+      DateOfBirth: m.dateOfBirth || 'N/A',
       ReferralCode: m.referralCode,
       Points: m.gamificationPoints,
       JoinedDate: m.joinedDate,
@@ -399,6 +400,13 @@ export default function AdminMembersPage() {
                   <Calendar className="w-3 h-3 text-amber-400" /> Joined Date
                 </span>
                 <p className="font-semibold text-white">{detailMember.joinedDate}</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-amber-400" /> Date of Birth (DOB)
+                </span>
+                <p className="font-semibold text-white">{detailMember.dateOfBirth || 'Not provided'}</p>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">

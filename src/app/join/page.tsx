@@ -44,6 +44,7 @@ function JoinContent() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [businessName, setBusinessBusiness] = useState('');
   const [category, setCategory] = useState(categories[0]?.name || 'IT & Software');
   const [designation, setDesignation] = useState('');
@@ -84,6 +85,16 @@ function JoinContent() {
   const [upiQrDataUrl, setUpiQrDataUrl] = useState('');
 
   useEffect(() => {
+    // Immediate server fetch with cache-busting to guarantee live settings on mobile
+    fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((serverData) => {
+        if (serverData && serverData.membershipFee !== undefined) {
+          setSettings((prev) => ({ ...prev, ...serverData }));
+        }
+      })
+      .catch(() => {});
+
     const handleUpdate = () => {
       setSettings(SECStore.getSettings());
       setCategories(SECStore.getCategories());
@@ -127,6 +138,11 @@ function JoinContent() {
       return;
     }
 
+    if (!dateOfBirth) {
+      setFormError('Please select your Date of Birth.');
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setFormError('Passwords do not match. Please verify your password confirmation.');
       return;
@@ -158,6 +174,7 @@ function JoinContent() {
       email: cleanEmail,
       phone: cleanPhone,
       whatsapp: cleanPhone,
+      dateOfBirth: dateOfBirth.trim(),
       avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop',
       bio: cleanWhyJoin || `${cleanDesignation} at ${cleanBusinessName}.`,
       role: 'member',
@@ -364,33 +381,47 @@ function JoinContent() {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Profile Photo / Headshot
+                    Date of Birth *
                   </label>
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-12 h-12 rounded-xl bg-slate-850 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-5 h-5 text-slate-500" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-300 cursor-pointer transition w-full justify-center">
-                        <Upload className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{avatarUrl ? 'Change Uploaded Photo' : 'Upload Member Photo'}</span>
-                        <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                      </label>
-                    </div>
-                    {avatarUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setAvatarUrl('')}
-                        className="text-xs text-red-400 hover:text-red-300 font-semibold"
-                      >
-                        ✕
-                      </button>
+                  <input
+                    type="date"
+                    required
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Profile Photo / Headshot
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-12 h-12 rounded-xl bg-slate-850 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 text-slate-500" />
                     )}
                   </div>
+                  <div className="flex-1">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-300 cursor-pointer transition w-full justify-center">
+                      <Upload className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{avatarUrl ? 'Change Uploaded Photo' : 'Upload Member Photo'}</span>
+                      <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                    </label>
+                  </div>
+                  {avatarUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setAvatarUrl('')}
+                      className="text-xs text-red-400 hover:text-red-300 font-semibold"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

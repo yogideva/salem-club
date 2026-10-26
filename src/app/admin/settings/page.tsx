@@ -271,6 +271,17 @@ export default function AdminSettingsPage() {
 
     SECStore.updateSettings(updatedSettingsPayload, 'Super Admin');
 
+    // Persist to server API to ensure immediate cross-device sync for mobile & desktop
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettingsPayload),
+      });
+    } catch (apiErr) {
+      console.warn('API sync notification:', apiErr);
+    }
+
     // Sync with Supabase PostgreSQL if configured
     if (isSupabaseConfigured && supabase) {
       try {
@@ -460,7 +471,7 @@ export default function AdminSettingsPage() {
       {savedSuccess && (
         <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 flex items-center gap-2 shadow-lg animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
-          <span>All club settings, fees, contact info, and policies successfully saved and applied system-wide!</span>
+          <span>All club settings, membership fee (₹{Number(membershipFee).toLocaleString('en-IN')}), contact info, and policies successfully saved and synced across mobile and desktop devices!</span>
         </div>
       )}
 

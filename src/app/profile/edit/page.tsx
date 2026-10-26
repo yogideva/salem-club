@@ -23,6 +23,7 @@ export default function EditProfilePage() {
 
   const [member, setMember] = useState<Member | null>(null);
   const [fullName, setFullName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [bio, setBio] = useState('');
@@ -51,6 +52,7 @@ export default function EditProfilePage() {
     if (current) {
       setMember(current);
       setFullName(current.fullName);
+      setDateOfBirth(current.dateOfBirth || '');
       setAvatarUrl(current.avatarUrl);
       setCoverImageUrl(current.coverImageUrl || '');
       setBio(current.bio);
@@ -86,6 +88,7 @@ export default function EditProfilePage() {
 
     const updatedData: Partial<Member> = {
       fullName,
+      dateOfBirth: dateOfBirth || undefined,
       avatarUrl,
       coverImageUrl: coverImageUrl || undefined,
       bio,
@@ -170,14 +173,25 @@ export default function EditProfilePage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Avatar Image URL</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Date of Birth</label>
                 <input
-                  type="url"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Avatar Image URL</label>
+              <input
+                type="url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+              />
             </div>
 
             <div>

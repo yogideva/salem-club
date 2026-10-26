@@ -335,6 +335,16 @@ export default function MemberProfilePage({
                 </div>
               )}
 
+              {member.dateOfBirth && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-200">
+                  <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Date of Birth</span>
+                    <span className="font-medium text-xs text-white">{member.dateOfBirth}</span>
+                  </div>
+                </div>
+              )}
+
               {member.business.website && (
                 <a
                   href={member.business.website}

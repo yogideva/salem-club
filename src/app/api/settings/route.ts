@@ -4,13 +4,24 @@ import path from 'path';
 import { INITIAL_SETTINGS } from '@/lib/mockData';
 import { sanitizeInput } from '@/lib/security';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const SETTINGS_FILE = path.join(process.cwd(), 'src', 'data', 'settings.json');
 
+// In-memory cache for ultra-fast response and serverless runtime persistence
+let memoryCache: any = null;
+
 function readSettingsFromFile() {
+  if (memoryCache) {
+    return memoryCache;
+  }
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
       const data = fs.readFileSync(SETTINGS_FILE, 'utf8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      memoryCache = { ...INITIAL_SETTINGS, ...parsed };
+      return memoryCache;
     }
   } catch (err) {
     console.error('Error reading settings file:', err);
@@ -19,6 +30,7 @@ function readSettingsFromFile() {
 }
 
 function writeSettingsToFile(settings: any) {
+  memoryCache = settings;
   try {
     const dir = path.dirname(SETTINGS_FILE);
     if (!fs.existsSync(dir)) {
@@ -27,7 +39,7 @@ function writeSettingsToFile(settings: any) {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
     return true;
   } catch (err) {
-    console.error('Error writing settings file:', err);
+    console.error('Error writing settings file (may be read-only runtime):', err);
     return false;
   }
 }
@@ -37,7 +49,9 @@ export async function GET() {
   const settings = readSettingsFromFile();
   return NextResponse.json(settings, {
     headers: {
-      'Cache-Control': 'no-store, max-age=0',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
     },
   });
 }
@@ -54,7 +68,9 @@ export async function POST(request: Request) {
       clubName: sanitizeInput(body.clubName || current.clubName),
       tagline: sanitizeInput(body.tagline || current.tagline),
       logoUrl: body.logoUrl || current.logoUrl || '/images/sec-logo.png',
-      membershipFee: Number(body.membershipFee) || current.membershipFee,
+      membershipFee: Number(body.membershipFee) !== undefined && !isNaN(Number(body.membershipFee))
+        ? Number(body.membershipFee)
+        : current.membershipFee,
       membershipDurationMonths: Number(body.membershipDurationMonths) || current.membershipDurationMonths,
       referralPercentage: Number(body.referralPercentage) || current.referralPercentage,
       upiId: sanitizeInput(body.upiId || current.upiId),
@@ -65,6 +81,17 @@ export async function POST(request: Request) {
       whatsappNumber: sanitizeInput(body.whatsappNumber || current.whatsappNumber),
       contactEmail: sanitizeInput(body.contactEmail || current.contactEmail),
       contactAddress: sanitizeInput(body.contactAddress || current.contactAddress),
+      instagramUrl: sanitizeInput(body.instagramUrl || current.instagramUrl || ''),
+      linkedinUrl: sanitizeInput(body.linkedinUrl || current.linkedinUrl || ''),
+      youtubeUrl: sanitizeInput(body.youtubeUrl || current.youtubeUrl || ''),
+      facebookUrl: sanitizeInput(body.facebookUrl || current.facebookUrl || ''),
+      aboutText: sanitizeInput(body.aboutText || current.aboutText || ''),
+      missionText: sanitizeInput(body.missionText || current.missionText || ''),
+      visionText: sanitizeInput(body.visionText || current.visionText || ''),
+      termsText: sanitizeInput(body.termsText || current.termsText || ''),
+      privacyText: sanitizeInput(body.privacyText || current.privacyText || ''),
+      gamification: body.gamification || current.gamification,
+      reminders: body.reminders || current.reminders,
       updatedAt: new Date().toISOString(),
     };
 
@@ -73,6 +100,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       settings: updated,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+      },
     });
   } catch (err: any) {
     return NextResponse.json(

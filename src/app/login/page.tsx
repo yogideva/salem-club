@@ -77,6 +77,7 @@ function MemberAuthContent() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [category, setCategory] = useState(categories[0]?.name || 'IT & Software');
   const [designation, setDesignation] = useState('');
@@ -111,6 +112,16 @@ function MemberAuthContent() {
   const [signupError, setSignupError] = useState('');
 
   useEffect(() => {
+    // Immediate server fetch with cache-busting to guarantee live settings on mobile
+    fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((serverData) => {
+        if (serverData && serverData.membershipFee !== undefined) {
+          setSettings((prev) => ({ ...prev, ...serverData }));
+        }
+      })
+      .catch(() => {});
+
     const handleUpdate = () => {
       setSettings(SECStore.getSettings());
       setCategories(SECStore.getCategories());
@@ -211,6 +222,11 @@ function MemberAuthContent() {
       return;
     }
 
+    if (!dateOfBirth) {
+      setSignupError('Please select your Date of Birth.');
+      return;
+    }
+
     if (!newPassword || newPassword.length < 6) {
       setSignupError('Please create a password of at least 6 characters for your member login.');
       return;
@@ -234,6 +250,7 @@ function MemberAuthContent() {
       email: cleanEmail,
       phone: cleanPhone,
       whatsapp: cleanPhone,
+      dateOfBirth: dateOfBirth.trim(),
       avatarUrl: memberPhoto || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&fit=crop`,
       bio: cleanDescription || `${cleanDesignation} at ${cleanBusinessName}.`,
       role: 'member',
@@ -646,6 +663,22 @@ function MemberAuthContent() {
 
                   <div>
                     <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                      Date of Birth *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                       Business / Company Name *
                     </label>
                     <input
@@ -657,9 +690,7 @@ function MemberAuthContent() {
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                       Industry Category *
@@ -676,7 +707,9 @@ function MemberAuthContent() {
                       ))}
                     </select>
                   </div>
+                </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                       Designation / Role *
@@ -690,9 +723,7 @@ function MemberAuthContent() {
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="text-[11px] font-semibold text-slate-300 block mb-1">
                       Location in Salem / Kongu Region *
@@ -706,6 +737,9 @@ function MemberAuthContent() {
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-400"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
 
                   <div>
                     <label className="text-[11px] font-semibold text-slate-300 block mb-1">

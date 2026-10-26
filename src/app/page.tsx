@@ -43,6 +43,16 @@ export default function HomePage() {
   const [contactSubmitted, setContactSubmitted] = useState(false);
 
   useEffect(() => {
+    // Immediate server fetch with cache-busting to guarantee live settings on mobile
+    fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((serverData) => {
+        if (serverData && serverData.membershipFee !== undefined) {
+          setSettings((prev) => ({ ...prev, ...serverData }));
+        }
+      })
+      .catch(() => {});
+
     const handleUpdate = () => {
       setSettings(SECStore.getSettings());
       setMembers(SECStore.getMembers());
@@ -132,10 +142,19 @@ export default function HomePage() {
   return (
     <div className="space-y-24 sm:space-y-32">
       {/* 1. HERO SECTION */}
-      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-32 overflow-hidden">
+      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-32 overflow-hidden rounded-3xl border border-amber-500/20 mx-2 sm:mx-6 my-2 shadow-2xl">
+        {/* Custom Uploaded Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 transform scale-105 transition-transform duration-1000"
+          style={{ backgroundImage: `url('/images/hero-bg.jpg')` }}
+        />
+        {/* Dark Luxury Gradient Overlays for Razor-Sharp Readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070B14]/95 via-[#070B14]/85 to-[#070B14] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#070B14]/95 via-[#070B14]/75 to-[#070B14]/95 z-0" />
+
         {/* Glow Spheres */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-amber-500/15 via-yellow-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-10 right-10 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-amber-500/20 via-yellow-500/10 to-transparent rounded-full blur-3xl pointer-events-none z-0" />
+        <div className="absolute top-10 right-10 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none z-0" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto space-y-6">
@@ -665,7 +684,12 @@ export default function HomePage() {
       {/* 12. MEMBERSHIP CTA BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative rounded-3xl p-8 sm:p-14 overflow-hidden border border-amber-400/40 shadow-2xl bg-gradient-to-r from-[#0E1628] via-[#15233E] to-[#0A101C]">
-          <div className="max-w-2xl space-y-5">
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 mix-blend-luminosity pointer-events-none"
+            style={{ backgroundImage: `url('/images/forum-banner.jpg')` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#070B14]/95 via-[#0E1628]/90 to-transparent pointer-events-none" />
+          <div className="max-w-2xl space-y-5 relative z-10">
             <span className="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-400/30">
               Limited Membership Openings
             </span>

@@ -56,6 +56,7 @@ export interface Member {
   whatsapp: string;
   avatarUrl: string;
   coverImageUrl?: string;
+  dateOfBirth?: string; // Member Date of Birth (YYYY-MM-DD)
   bio: string;
   role: UserRole;
   status: MembershipStatus;

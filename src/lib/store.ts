@@ -86,18 +86,31 @@ if (typeof window !== 'undefined') {
 }
 
 // Auto-sync settings from server to ensure all devices (mobile & desktop) stay in sync
-if (typeof window !== 'undefined') {
-  fetch('/api/settings', { cache: 'no-store' })
-    .then((res) => (res.ok ? res.json() : null))
-    .then((serverSettings) => {
-      if (serverSettings && (serverSettings.membershipFee || serverSettings.clubName)) {
+export async function syncSettingsWithServer(): Promise<AdminSettings | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const res = await fetch(`/api/settings?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { Pragma: 'no-cache', 'Cache-Control': 'no-cache' },
+    });
+    if (res.ok) {
+      const serverSettings = await res.json();
+      if (serverSettings && (serverSettings.membershipFee !== undefined || serverSettings.clubName)) {
         const local = getStoredItem<AdminSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
         const merged = { ...local, ...serverSettings };
         setStoredItem(STORAGE_KEYS.SETTINGS, merged);
         notifyListeners();
+        return merged;
       }
-    })
-    .catch(() => {});
+    }
+  } catch (err) {
+    console.warn('Sync settings error:', err);
+  }
+  return null;
+}
+
+if (typeof window !== 'undefined') {
+  syncSettingsWithServer();
 
   fetch('/api/events', { cache: 'no-store' })
     .then((res) => (res.ok ? res.json() : null))

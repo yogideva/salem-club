@@ -14,7 +14,7 @@ function resolveGitPath(): string {
 
   try {
     if (fs.existsSync(/*turbopackIgnore: true*/ ghDesktopBase)) {
-      const entries = fs.readdirSync(/*turbopackIgnore: true*/ ghDesktopBase);
+      const entries = fs.readdirSync(/*turbopackIgnore: true*/ ghDesktopBase).sort().reverse();
       for (const entry of entries) {
         if (entry.startsWith('app-')) {
           const candidate = path.join(ghDesktopBase, entry, 'resources', 'app', 'git', 'cmd', 'git.exe');
@@ -26,6 +26,14 @@ function resolveGitPath(): string {
     }
   } catch {
     // Fallback
+  }
+
+  const standardPaths = [
+    'C:\\Program Files\\Git\\cmd\\git.exe',
+    'C:\\Program Files (x86)\\Git\\cmd\\git.exe',
+  ];
+  for (const p of standardPaths) {
+    if (fs.existsSync(/*turbopackIgnore: true*/ p)) return `"${p}"`;
   }
 
   return 'git';
